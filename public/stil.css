@@ -1,0 +1,503 @@
+/* Reset */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    line-height: 1.6;
+}
+
+header {
+    background: #2c3e50;
+    color: #fff;
+    padding: 1.5rem 2rem;
+    text-align: center;
+}
+
+main {
+    max-width: 960px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+a {
+    color: #1d4ed8;
+}
+
+.secondary-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.5rem;
+    padding: 0.65rem 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    color: #334155;
+    text-decoration: none;
+    font-weight: 700;
+    background: #fff;
+}
+
+.secondary-link:hover {
+    background: #f8fafc;
+}
+
+.page-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(44, 62, 80, 0.08);
+    padding: 2rem;
+}
+
+.page-card h2 {
+    margin-bottom: 0.75rem;
+}
+
+.page-card p {
+    margin-bottom: 1rem;
+}
+
+.address-form {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.field-group {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.field-group label {
+    font-weight: 600;
+}
+
+.field-group input {
+    width: 100%;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font: inherit;
+    background: #fff;
+}
+
+.field-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.help-text {
+    color: #475569;
+    font-size: 0.95rem;
+}
+
+.selection-box {
+    border: 1px solid #dbe4f0;
+    border-radius: 12px;
+    background: #f8fafc;
+    padding: 1rem;
+}
+
+.selection-box h3 {
+    margin-bottom: 0.75rem;
+}
+
+.selection-box p {
+    margin-bottom: 0.4rem;
+}
+
+.address-map {
+    width: 100%;
+    height: 400px;
+    margin-top: 0.75rem;
+    border-radius: 12px;
+    border: 1px solid #dbe4f0;
+    background: #e2e8f0;
+}
+
+.form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+}
+
+button {
+    border: 0;
+    border-radius: 999px;
+    padding: 0.85rem 1.4rem;
+    background: #0f766e;
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #115e59;
+}
+
+/* Simulationsside */
+.simulation-page {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.simulation-header {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.simulation-layout {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.9fr) minmax(260px, 1.1fr);
+    gap: 1rem;
+}
+
+/* Genbruges til formular, forudsætninger og grafpanel på simulationssiden */
+.simulation-form,
+.simulation-summary,
+.chart-panel {
+    border: 1px solid #dbe4f0;
+    border-radius: 12px;
+    background: #f8fafc;
+    padding: 1rem;
+}
+
+.simulation-form {
+    display: grid;
+    gap: 1rem;
+}
+
+.simulation-summary h3 {
+    margin-bottom: 0.75rem;
+}
+
+.simulation-summary p {
+    margin-bottom: 0.45rem;
+}
+
+.chart-panel {
+    min-height: 420px;
+}
+
+.chart-panel canvas {
+    width: 100%;
+    min-height: 360px;
+}
+
+.autocomplete-container {
+    position: relative;
+    width: 100%;
+}
+
+.autocomplete-container input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.dawa-autocomplete-suggestions {
+    margin: 0.3em 0 0 0;
+    padding: 0;
+    text-align: left;
+    border-radius: 0.75rem;
+    background: #fcfcfc;
+    box-shadow: 0 0.5rem 1.5rem rgba(15, 23, 42, 0.15);
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+.dawa-autocomplete-suggestions .dawa-autocomplete-suggestion {
+    margin: 0;
+    list-style: none;
+    cursor: pointer;
+    padding: 0.75rem 0.9rem;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+    border-bottom-width: 0;
+}
+
+.dawa-autocomplete-suggestions .dawa-autocomplete-suggestion:first-child {
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+}
+
+.dawa-autocomplete-suggestions .dawa-autocomplete-suggestion:last-child {
+    border-bottom-left-radius: inherit;
+    border-bottom-right-radius: inherit;
+    border-bottom-width: 1px;
+}
+
+.dawa-autocomplete-suggestions .dawa-autocomplete-suggestion.dawa-selected,
+.dawa-autocomplete-suggestions .dawa-autocomplete-suggestion:hover {
+    background: #eff6ff;
+}
+
+/* Cases-oversigt + sammenligning */
+nav {
+    margin-top: 0.75rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+nav a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+nav a:hover {
+    text-decoration: underline;
+}
+
+.compare-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+    padding: 0.75rem 1rem;
+    background: #f1f5f9;
+    border-radius: 10px;
+}
+
+.compare-bar button[disabled] {
+    background: #cbd5e1;
+    cursor: not-allowed;
+}
+
+.case-list {
+    list-style: none;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.case-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: #f8fafc;
+    border: 1px solid #dbe4f0;
+    border-radius: 12px;
+}
+
+.case-row input[type="checkbox"] {
+    width: 1.25rem;
+    height: 1.25rem;
+    accent-color: #0f766e;
+}
+
+.case-info {
+    display: grid;
+    gap: 0.25rem;
+}
+
+.case-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.case-meta {
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.case-desc {
+    color: #475569;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.case-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.case-actions button {
+    padding: 0.5rem 0.95rem;
+    font-size: 0.9rem;
+}
+
+button.danger {
+    background: #b91c1c;
+}
+
+button.danger:hover {
+    background: #991b1b;
+}
+
+/* Sammenligningstabel */
+.compare-table-wrapper {
+    overflow-x: auto;
+}
+
+.compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+}
+
+.compare-table th,
+.compare-table td {
+    padding: 0.65rem 0.9rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.compare-table thead th {
+    background: #f1f5f9;
+    font-weight: 700;
+}
+
+.compare-table .row-label {
+    font-weight: 600;
+    color: #334155;
+}
+
+/* Trin-totaler på case-detalje */
+.trin-total {
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #ecfdf5;
+    border-left: 3px solid #0f766e;
+    font-weight: 600;
+    border-radius: 0 6px 6px 0;
+}
+
+/* Ejendomsoversigt */
+.ejendom-list {
+    list-style: none;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.ejendom-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: #f8fafc;
+    border: 1px solid #dbe4f0;
+    border-radius: 12px;
+}
+
+.ejendom-row.arkiveret {
+    opacity: 0.6;
+    background: #f1f5f9;
+}
+
+.ejendom-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.ejendom-actions button {
+    padding: 0.5rem 0.95rem;
+    font-size: 0.9rem;
+}
+
+/* Forsidens navigations-kort */
+.frontpage-nav {
+    list-style: none;
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.frontpage-nav a {
+    display: grid;
+    gap: 0.25rem;
+    padding: 1rem 1.25rem;
+    background: #f8fafc;
+    border: 1px solid #dbe4f0;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #1e293b;
+}
+
+.frontpage-nav a:hover {
+    background: #eff6ff;
+    border-color: #93c5fd;
+}
+
+.frontpage-nav strong {
+    font-size: 1.05rem;
+    color: #0f766e;
+}
+
+.frontpage-nav span {
+    color: #475569;
+    font-size: 0.95rem;
+}
+
+/* ─── 5-trins flow på case-detalje-siden ───
+   Progressive enhancement: hvis JS aldrig kører, vises alle trin under
+   hinanden (graceful fallback). Når JS er aktivt, sættes 'js-enhanced' på
+   body og kun det aktive trin vises. */
+.step-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    background: #fff;
+    border-radius: 12px;
+    padding: 0.75rem;
+    box-shadow: 0 6px 16px rgba(44, 62, 80, 0.06);
+    flex-wrap: wrap;
+}
+
+.step-bar-item {
+    flex: 1 1 0;
+    min-width: 8rem;
+    padding: 0.65rem 0.9rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #334155;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-align: center;
+}
+
+.step-bar-item:hover {
+    background: #e2e8f0;
+}
+
+.step-bar-item.active {
+    background: #1d4ed8;
+    color: #fff;
+    border-color: #1d4ed8;
+}
+
+.step-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+    gap: 0.5rem;
+}
+
+.step-nav button {
+    min-width: 8rem;
+}
+
+.step-nav .step-back[disabled] {
+    visibility: hidden;
+}
+
+body.js-enhanced [data-step]:not(.active) {
+    display: none;
+}

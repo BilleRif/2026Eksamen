@@ -1,0 +1,15 @@
+# Dependencies - installeres med "npm install", skal ikke committes
+node_modules/
+
+# Miljøvariabler - indeholder passwords, skal ALDRIG i Git
+.env
+
+# macOS systemfil
+.DS_Store
+
+# Office lock-filer (Word/Excel skriver disse mens dokumentet er åbent)
+~$*
+
+# Tempfiler / logs
+*.tmp
+*.log

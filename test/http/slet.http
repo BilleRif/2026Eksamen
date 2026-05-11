@@ -1,0 +1,14 @@
+### Slet en investeringscase (kaskaderer til alle linjer via FK ON DELETE CASCADE)
+DELETE http://localhost:3000/api/investment-cases/1
+
+### Slet én købsomkostning
+DELETE http://localhost:3000/api/koebsomkostning/1
+
+### Slet én renovering
+DELETE http://localhost:3000/api/renovering/1
+
+### Slet én driftsudgift
+DELETE http://localhost:3000/api/driftsudgift/1
+
+### Slet en ejendom (kun mulig hvis der ikke er tilknyttede cases — ellers arkivér i stedet)
+DELETE http://localhost:3000/api/ejendom/1

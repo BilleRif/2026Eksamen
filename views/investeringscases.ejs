@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="da">
+
+<head>
+    <meta charset="UTF-8">
+    <title>
+        <%= title %>
+    </title>
+    <link rel="stylesheet" href="/stil.css">
+</head>
+
+<body>
+    <header>
+        <h1>
+            <%= title %>
+        </h1>
+        <nav>
+            <a href="/">← Forside</a>
+            <a href="/properties">Ejendomme</a>
+        </nav>
+    </header>
+    <main>
+        <section class="page-card">
+
+            <h2>Opret ny investeringscase</h2>
+            <form id="case-form">
+                <div class="field-group">
+                    <label for="property">Ejendom</label>
+                    <select id="property">
+                        <option value="">Vælg ejendom...</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label for="navn">Navn</label>
+                    <input id="navn" type="text" placeholder="fx Plan A - udlejning">
+                </div>
+                <div class="field-group">
+                    <label for="beskrivelse">Beskrivelse</label>
+                    <input id="beskrivelse" type="text" placeholder="Kort beskrivelse">
+                </div>
+                <button type="submit">Opret case</button>
+                <p id="status"></p>
+            </form>
+
+            <h2>Eksisterende cases</h2>
+            <p class="help-text">
+                Vælg 2 eller 3 cases for at sammenligne dem side om side.
+            </p>
+            <div class="compare-bar">
+                <span id="compare-count">0 valgt</span>
+                <button id="compare-button" type="button" disabled>Sammenlign valgte</button>
+            </div>
+            <ul id="cases-list" class="case-list">
+                <li>Henter cases...</li>
+            </ul>
+
+        </section>
+    </main>
+    <script src="/investeringscases.js"></script>
+</body>
+
+</html>

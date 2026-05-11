@@ -1,0 +1,100 @@
+### Opret en ejendom
+POST http://localhost:3000/api/ejendom
+Content-Type: application/json
+
+{
+  "vejnavn": "Nordre Fasanvej",
+  "husnummer": "215",
+  "postnummer": "2000",
+  "bynavn": "Frederiksberg",
+  "bbrId": "0a3f50c8-f7ed-32b8-e044-0003ba298018",
+  "ejendomstype": "Etageboligbebyggelse (flerfamiliehus)",
+  "byggeaar": 1930,
+  "boligareal": 72,
+  "antalVaerelser": 3,
+  "grundareal": 0
+}
+
+### Opret en investeringscase
+POST http://localhost:3000/api/investment-cases
+Content-Type: application/json
+
+{
+  "ejendomId": 1,
+  "navn": "Plan A",
+  "beskrivelse": "Test case"
+}
+
+### Gem finansiering for en case (upsert)
+POST http://localhost:3000/api/finansiering
+Content-Type: application/json
+
+{
+  "caseId": 1,
+  "laanebeloeb": 2000000,
+  "rentePct": 4,
+  "loebetidAar": 30,
+  "afdragsfriAar": 0,
+  "laanetype": "fastforrentet"
+}
+
+### Tilføj en købsomkostning
+POST http://localhost:3000/api/koebsomkostning
+Content-Type: application/json
+
+{
+  "caseId": 1,
+  "beskrivelse": "Ejendomspris",
+  "beloeb": 2500000
+}
+
+### Tilføj en renovering
+POST http://localhost:3000/api/renovering
+Content-Type: application/json
+
+{
+  "caseId": 1,
+  "beskrivelse": "Køkken renovering",
+  "beloeb": 150000,
+  "aar": 5
+}
+
+### Tilføj en driftsudgift
+POST http://localhost:3000/api/driftsudgift
+Content-Type: application/json
+
+{
+  "caseId": 1,
+  "navn": "Forsikring",
+  "beloebMaaned": 500
+}
+
+### Gem udlejning for en case (upsert)
+POST http://localhost:3000/api/udlejning
+Content-Type: application/json
+
+{
+  "caseId": 1,
+  "maanedligLeje": 8000,
+  "maanedligUdgift": 500
+}
+
+### Duplikér en case (kopierer alle linjer over)
+POST http://localhost:3000/api/investment-cases/1/duplicate
+Content-Type: application/json
+
+{}
+
+### Kør 30-års simulation
+POST http://localhost:3000/api/simulation/simulate
+Content-Type: application/json
+
+{
+  "loanAmount": 2000000,
+  "initialEquity": 500000,
+  "interestRate": 0.04,
+  "annualRepayment": 66667,
+  "rent": 15000,
+  "expenses": 1500,
+  "years": 30
+}

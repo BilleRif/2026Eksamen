@@ -1,0 +1,18 @@
+{
+  "name": "prog-eksamen",
+  "version": "1.0.0",
+  "description": "Ejendomsinvesteringssystem - CBS HA(IT) Eksamen 2026",
+  "main": "Code/server.js",
+  "scripts": {
+    "start": "node Code/server.js",
+    "test": "node --test test/unit/finansiering.test.js test/unit/simulering.test.js test/unit/ejendomValidator.test.js"
+  },
+  "author": "Gruppe 13",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "ejs": "^5.0.2",
+    "express": "^5.2.1",
+    "mssql": "^12.2.3"
+  }
+}

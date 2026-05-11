@@ -1,0 +1,36 @@
+### Hent alle investeringscases
+GET http://localhost:3000/api/investment-cases
+
+### Hent én case (kun grunddata)
+GET http://localhost:3000/api/investment-cases/1
+
+### Hent én case med ALLE tilknyttede linjer i ét kald
+GET http://localhost:3000/api/investment-cases/1/full
+
+### Opret en investeringscase
+POST http://localhost:3000/api/investment-cases
+Content-Type: application/json
+
+{
+  "ejendomId": 1,
+  "navn": "Standard case",
+  "beskrivelse": "Første simple investeringscase"
+}
+
+### Duplikér en case (kopierer omkostninger, finansiering, renoveringer, drift, udlejning)
+POST http://localhost:3000/api/investment-cases/1/duplicate
+Content-Type: application/json
+
+{}
+
+### Opdater navn og beskrivelse
+PUT http://localhost:3000/api/investment-cases/1
+Content-Type: application/json
+
+{
+  "navn": "Plan A",
+  "beskrivelse": "Opdateret beskrivelse"
+}
+
+### Slet en case
+DELETE http://localhost:3000/api/investment-cases/1

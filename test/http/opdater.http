@@ -1,0 +1,42 @@
+### Opdater en ejendom (genindhentede BBR-data)
+PUT http://localhost:3000/api/ejendom/1
+Content-Type: application/json
+
+{
+  "vejnavn": "Nordre Fasanvej",
+  "husnummer": "215",
+  "postnummer": "2000",
+  "bynavn": "Frederiksberg",
+  "bbrId": "0a3f50c8-f7ed-32b8-e044-0003ba298018",
+  "ejendomstype": "Etageboligbebyggelse (flerfamiliehus)",
+  "byggeaar": 1930,
+  "boligareal": 75,
+  "antalVaerelser": 3,
+  "grundareal": 0
+}
+
+### Arkivér / gendan ejendomsprofil
+PUT http://localhost:3000/api/ejendom/1/arkiver
+Content-Type: application/json
+
+{
+  "arkiveret": true
+}
+
+### Opdater navn og beskrivelse på en case
+PUT http://localhost:3000/api/investment-cases/1
+Content-Type: application/json
+
+{
+  "navn": "Plan A opdateret",
+  "beskrivelse": "Ny beskrivelse"
+}
+
+### Opdater udlejning direkte via id
+PUT http://localhost:3000/api/udlejning/1
+Content-Type: application/json
+
+{
+  "maanedligLeje": 9000,
+  "maanedligUdgift": 600
+}

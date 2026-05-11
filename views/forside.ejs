@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/stil.css">
+</head>
+<body>
+    <header>
+        <h1><%= title %></h1>
+        <p>CBS HA(IT) — Eksamensprojekt 2026</p>
+    </header>
+
+    <main>
+        <section class="page-card">
+            <h2>Velkommen</h2>
+            <p>
+                Denne webapplikation hjælper dig med at analysere og simulere
+                ejendomsinvesteringer. Slå en dansk adresse op, hent BBR-data
+                for ejendommen, opret én eller flere investeringscases ovenpå
+                den, og se en 30-års simulation af egenkapital, cashflow og
+                restgæld.
+            </p>
+
+            <h2>Kom i gang</h2>
+            <ul class="frontpage-nav">
+                <li>
+                    <a href="/properties">
+                        <strong>1. Ejendomme</strong>
+                        <span>Slå adresse op via DAWA, hent BBR-data, opret ejendomsprofil.</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/investment-cases">
+                        <strong>2. Investeringscases</strong>
+                        <span>Opret cases på en ejendom, udfyld køb, finansiering, drift og udlejning. Simulering køres på den enkelte case.</span>
+                    </a>
+                </li>
+            </ul>
+        </section>
+    </main>
+</body>
+</html>

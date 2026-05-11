@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/stil.css">
+    <!-- Leaflet (open source kortbibliotek, ikke et JS-framework) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+<body>
+    <header>
+        <h1><%= title %></h1>
+        <p>Adresseopslag via DAWA autocomplete</p>
+        <nav>
+            <a href="/">← Forside</a>
+            <a href="/investment-cases">Investeringscases</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page-card">
+            <h2>Eksisterende ejendomsprofiler</h2>
+            <p class="help-text">
+                Oversigt over ejendomme du tidligere har gemt. Arkiverede profiler skjules
+                fra dropdownen ved oprettelse af nye investeringscases, men deres
+                historik bevares.
+            </p>
+            <ul id="ejendom-list" class="ejendom-list">
+                <li>Henter ejendomme...</li>
+            </ul>
+        </section>
+
+        <section class="page-card">
+            <h2>Ejendomsadresse</h2>
+            <p>Begynd at skrive en dansk adresse. Når du vælger et forslag, udfylder vi felterne nedenfor.</p>
+
+            <form class="address-form" id="property-form">
+                <div class="field-group">
+                    <label for="address-input">Adresse</label>
+                    <div class="autocomplete-container">
+                        <input
+                            id="address-input"
+                            type="text"
+                            placeholder="Skriv vejnavn, husnummer eller postnummer"
+                            autocomplete="off">
+                    </div>
+                    <p class="help-text">Begynd at skrive en dansk adresse — felterne nedenfor udfyldes automatisk.</p>
+                </div>
+
+                <div class="field-grid">
+                    <div class="field-group">
+                        <label for="street">Vejnavn</label>
+                        <input id="street" type="text" readonly>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="house-number">Husnummer</label>
+                        <input id="house-number" type="text" readonly>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="floor">Etage</label>
+                        <input id="floor" type="text" readonly>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="door">Dør</label>
+                        <input id="door" type="text" readonly>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="postal-code">Postnummer</label>
+                        <input id="postal-code" type="text" readonly>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="city">By</label>
+                        <input id="city" type="text" readonly>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="municipality">Kommune</label>
+                        <input id="municipality" type="text" readonly>
+                    </div>
+                </div>
+
+                <input id="address-id" type="hidden">
+
+                <div class="form-actions">
+                    <button type="submit" id="save-property-button">Gem ejendom</button>
+                    <p class="help-text" id="save-status">Vælg en adresse og gem den i databasen.</p>
+                </div>
+            </form>
+
+            <section class="selection-box">
+                <h3>Valgt adresse</h3>
+                <p id="selected-address-text">Ingen adresse valgt endnu.</p>
+            </section>
+
+            <section class="selection-box">
+                <h3>Yderligere adressedata</h3>
+                <p id="metadata-status" class="help-text">Vælg en adresse for at hente tilknyttede metadata.</p>
+                <div id="metadata-summary"></div>
+            </section>
+
+            <section class="selection-box">
+                <h3>Luftfoto</h3>
+                <p id="aerial-status" class="help-text">Vælg en adresse for at vise luftfoto af ejendommen.</p>
+                <div id="address-map" class="address-map"></div>
+            </section>
+
+            <section class="selection-box">
+                <h3>Boligdata</h3>
+                <p id="bbr-status" class="help-text">Vælg en adresse for at hente tilknyttede boligdata.</p>
+                <div id="bbr-summary"></div>
+            </section>
+        </section>
+    </main>
+
+    <script src="https://cdn.dataforsyningen.dk/dawa/assets/dawa-autocomplete2/1.0.2/dawa-autocomplete2.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/adresseopslag.js"></script>
+    <script src="/ejendomsliste.js"></script>
+</body>
+</html>

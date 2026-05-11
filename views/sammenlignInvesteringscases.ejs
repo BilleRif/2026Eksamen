@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="da">
+
+<head>
+    <meta charset="UTF-8">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/stil.css">
+</head>
+
+<body>
+    <header>
+        <h1><%= title %></h1>
+        <nav>
+            <a href="/investment-cases">← Tilbage til cases</a>
+        </nav>
+    </header>
+    <main>
+
+        <section class="page-card">
+            <h2>Nøgletal pr. case</h2>
+            <p id="compare-status" class="help-text">Henter cases...</p>
+            <div class="compare-table-wrapper">
+                <table id="compare-table" class="compare-table" hidden>
+                    <thead>
+                        <tr>
+                            <th>Nøgletal</th>
+                            <!-- Case-overskrifter indsættes via JS -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rækker indsættes via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="page-card">
+            <h2>Udvikling over 30 år</h2>
+            <div class="field-group">
+                <label for="metric-select">Vælg nøgletal</label>
+                <select id="metric-select">
+                    <option value="equity">Egenkapital</option>
+                    <option value="cashflow">Cashflow</option>
+                    <option value="debt">Gæld</option>
+                </select>
+            </div>
+            <div class="chart-panel">
+                <canvas id="compare-chart"></canvas>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/sammenlignInvesteringscases.js"></script>
+</body>
+
+</html>

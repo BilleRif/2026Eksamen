@@ -1,0 +1,35 @@
+### Hent alle ejendomme (inkl. arkiverede)
+GET http://localhost:3000/api/ejendom
+
+### Hent kun aktive ejendomme (bruges af case-dropdown)
+GET http://localhost:3000/api/ejendom?includeArkiveret=false
+
+### Hent én bestemt ejendom
+GET http://localhost:3000/api/ejendom/1
+
+### Hent alle investeringscases
+GET http://localhost:3000/api/investment-cases
+
+### Hent én case med alle tilknyttede linjer
+GET http://localhost:3000/api/investment-cases/1/full
+
+### Hent finansiering for en case
+GET http://localhost:3000/api/finansiering?caseId=1
+
+### Hent købsomkostninger for en case
+GET http://localhost:3000/api/koebsomkostning?caseId=1
+
+### Hent renoveringer for en case
+GET http://localhost:3000/api/renovering?caseId=1
+
+### Hent driftsudgifter for en case
+GET http://localhost:3000/api/driftsudgift?caseId=1
+
+### Hent udlejning for en case
+GET http://localhost:3000/api/udlejning?caseId=1
+
+### DAWA-validering af en adresse
+GET http://localhost:3000/api/dawa/validate?adgangsadresseid=0a3f50c8-f7ed-32b8-e044-0003ba298018
+
+### BBR-data for en adresse
+GET http://localhost:3000/api/bbr?adgangsadresseid=0a3f50c8-f7ed-32b8-e044-0003ba298018
