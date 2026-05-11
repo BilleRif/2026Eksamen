@@ -56,6 +56,7 @@ function byggSimParametre(fuldCase) {
 }
 
 async function hentFuldCase(caseId) {
+    // Henter både stamdata og alle delbudgetter for én case.
     const response = await fetch(`/api/investment-cases/${caseId}/full`);
     if (!response.ok) {
         const err = await response.json().catch(() => ({}));
@@ -65,6 +66,7 @@ async function hentFuldCase(caseId) {
 }
 
 async function koerSimulation(params) {
+    // Sammenligning bruger samme simulations-endpoint som detaljesiden.
     const response = await fetch('/api/simulation/simulate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -78,6 +80,7 @@ async function koerSimulation(params) {
 }
 
 function formatKr(value) {
+    // Bruges i tabellen, hvor alle beløb vises med kr.
     return Number(value).toLocaleString('da-DK') + ' kr';
 }
 
@@ -105,6 +108,7 @@ function byggNøgletalRækker(resultater) {
 }
 
 function tegnTabel(resultater) {
+    // Tabellen viser faste nøgletal for hver case side om side.
     const table = document.getElementById('compare-table');
     const thead = table.querySelector('thead tr');
     const tbody = table.querySelector('tbody');
@@ -114,6 +118,7 @@ function tegnTabel(resultater) {
     tbody.innerHTML = '';
 
     resultater.forEach(r => {
+        // Hver case får sin egen kolonne.
         const th = document.createElement('th');
         th.textContent = r.case.navn;
         thead.appendChild(th);
@@ -142,6 +147,7 @@ function tegnGraf(resultater, metric) {
     if (aktuelChart) aktuelChart.destroy();
 
     const labels = Array.from({ length: SIMULATION_AAR }, (_, i) => `År ${i + 1}`);
+    // Hver case bliver et datasæt i samme graf.
     const datasets = resultater.map((r, i) => ({
         label: r.case.navn,
         data: r.simulation.map(p => p[metric]),
@@ -166,6 +172,7 @@ function tegnGraf(resultater, metric) {
 }
 
 async function init() {
+    // Starter siden ved at læse valgte cases fra URL'en.
     const status = document.getElementById('compare-status');
     const ids = hentIdsFraUrl();
 
@@ -175,6 +182,7 @@ async function init() {
     }
 
     try {
+        // Cases og simulationer hentes parallelt for at gøre siden hurtigere.
         const fuldCases = await Promise.all(ids.map(hentFuldCase));
         const simulationer = await Promise.all(
             fuldCases.map(c => koerSimulation(byggSimParametre(c)))
@@ -190,6 +198,7 @@ async function init() {
 }
 
 document.getElementById('metric-select').addEventListener('change', (event) => {
+    // Dropdown'en skifter mellem egenkapital, cashflow og gæld.
     if (simResultater.length > 0) {
         tegnGraf(simResultater, event.target.value);
     }

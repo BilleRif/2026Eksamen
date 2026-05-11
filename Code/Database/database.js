@@ -38,11 +38,13 @@ class Database {
 
     // Kører en query med parametre og returnerer rækkerne.
     async query(query, params = []) {
+        // Routes bruger denne metode, når de skal hente data tilbage fra SQL.
         if (!this.poolconnection) {
             throw new Error('Databaseforbindelsen er ikke oprettet.');
         }
 
         const request = this.poolconnection.request();
+        // Parametre bindes her, så værdier ikke sættes direkte ind i SQL-teksten.
         params.forEach(p => request.input(p.name, p.type, p.value));
         const result = await request.query(query);
         return result.recordset;
@@ -50,6 +52,7 @@ class Database {
 
     // Kører INSERT/UPDATE/DELETE og returnerer antal ændrede rækker
     async execute(query, params = []) {
+        // Bruges når routen kun skal vide, om noget blev ændret.
         const request = this.poolconnection.request();
         params.forEach(p => request.input(p.name, p.type, p.value));
         const result = await request.query(query);

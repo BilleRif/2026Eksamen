@@ -1,7 +1,7 @@
 // Samler oprydning og validering af ejendomsdata.
-class PropertyValidator {
+class EjendomsValidering {
     // Adressefelter er obligatoriske. BBR-felter må gerne mangle.
-    static REQUIRED_FIELDS = [
+    static PÅKRÆVEDE_FELTER = [
         ['vejnavn',    'Vejnavn mangler.'],
         ['husnummer',  'Husnummer mangler.'],
         ['postnummer', 'Postnummer mangler.'],
@@ -9,7 +9,7 @@ class PropertyValidator {
     ];
 
     // Rydder tekstfelter og gør talfelter klar til databasen.
-    normalize(body = {}) {
+    normaliser(body = {}) {
         return {
             vejnavn:        String(body.vejnavn        || '').trim(),
             husnummer:      String(body.husnummer      || '').trim(),
@@ -24,15 +24,18 @@ class PropertyValidator {
         };
     }
 
-    validate(property) {
-        const missing = PropertyValidator.REQUIRED_FIELDS.find(([key]) => !property[key]);
-        return missing ? missing[1] : null;
+    valider(ejendom) {
+        const manglendeFelt = EjendomsValidering.PÅKRÆVEDE_FELTER.find(([felt]) => !ejendom[felt]);
+        return manglendeFelt ? manglendeFelt[1] : null;
     }
 }
 
-// Beholder de gamle funktionsnavne, så resten af koden stadig virker.
-const _validator = new PropertyValidator();
-const normalizePropertyPayload = (body) => _validator.normalize(body);
-const validateProperty = (property) => _validator.validate(property);
+const validering = new EjendomsValidering();
+const normaliserEjendomsPayload = (body) => validering.normaliser(body);
+const validerEjendom = (ejendom) => validering.valider(ejendom);
 
-module.exports = { PropertyValidator, normalizePropertyPayload, validateProperty };
+module.exports = {
+    EjendomsValidering,
+    normaliserEjendomsPayload,
+    validerEjendom
+};

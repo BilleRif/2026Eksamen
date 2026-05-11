@@ -5,7 +5,7 @@
   "main": "Code/server.js",
   "scripts": {
     "start": "node Code/server.js",
-    "test": "node --test test/unit/finansiering.test.js test/unit/simulering.test.js test/unit/ejendomValidator.test.js"
+    "test": "node --test test/unit/finansiering.test.js test/unit/simulering.test.js test/unit/ejendomsValidering.test.js"
   },
   "author": "Gruppe 13",
   "license": "ISC",

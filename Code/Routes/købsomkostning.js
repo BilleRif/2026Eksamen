@@ -16,7 +16,7 @@ module.exports = function createKøbsomkostningRouter(database) {
         }
 
         try {
-            const rows = await database.query(`
+            const rækker = await database.query(`
                 SELECT [koebsomkostning_id] AS koebsomkostningId,
                        [case_id]            AS caseId,
                        [beskrivelse],
@@ -26,7 +26,7 @@ module.exports = function createKøbsomkostningRouter(database) {
                 ORDER BY [koebsomkostning_id] ASC
             `, [{ name: 'caseId', type: sql.Int, value: caseId }]);
 
-            return res.status(200).json(rows);
+            return res.status(200).json(rækker);
         } catch (error) {
             return next(error);
         }
@@ -49,7 +49,7 @@ module.exports = function createKøbsomkostningRouter(database) {
         }
 
         try {
-            const rows = await database.query(`
+            const rækker = await database.query(`
                 INSERT INTO [dbo].[Koebsomkostning] ([case_id],[beskrivelse],[beloeb])
                 OUTPUT INSERTED.koebsomkostning_id AS koebsomkostningId,
                        INSERTED.case_id AS caseId,
@@ -64,7 +64,7 @@ module.exports = function createKøbsomkostningRouter(database) {
 
             return res.status(201).json({
                 message: 'Omkostning tilføjet.',
-                koebsomkostning: rows[0]
+                koebsomkostning: rækker[0]
             });
         } catch (error) {
             return next(error);
@@ -80,13 +80,13 @@ module.exports = function createKøbsomkostningRouter(database) {
         }
 
         try {
-            const deleted = await database.query(`
+            const slettedeRækker = await database.query(`
                 DELETE FROM [dbo].[Koebsomkostning]
                 OUTPUT DELETED.koebsomkostning_id AS koebsomkostningId
                 WHERE [koebsomkostning_id] = @id
             `, [{ name: 'id', type: sql.Int, value: id }]);
 
-            if (deleted.length === 0) {
+            if (slettedeRækker.length === 0) {
                 return res.status(404).json({ error: 'Omkostningen blev ikke fundet.' });
             }
             return res.status(200).json({ message: 'Omkostning slettet.' });

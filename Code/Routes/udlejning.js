@@ -16,7 +16,7 @@ module.exports = function createUdlejningRouter(database) {
         }
 
         try {
-            const rows = await database.query(`
+            const rækker = await database.query(`
                 SELECT [udlejning_id]      AS udlejningId,
                        [case_id]           AS caseId,
                        [maanedlig_leje]    AS maanedligLeje,
@@ -25,7 +25,7 @@ module.exports = function createUdlejningRouter(database) {
                 WHERE [case_id] = @caseId
             `, [{ name: 'caseId', type: sql.Int, value: caseId }]);
 
-            return res.status(200).json(rows[0] || null);
+            return res.status(200).json(rækker[0] || null);
         } catch (error) {
             return next(error);
         }
@@ -55,7 +55,7 @@ module.exports = function createUdlejningRouter(database) {
                 WHERE [case_id] = @caseId
             `, [{ name: 'caseId', type: sql.Int, value: caseId }]);
 
-            const params = [
+            const sqlParametre = [
                 { name: 'caseId',          type: sql.Int,           value: caseId },
                 { name: 'maanedligLeje',   type: sql.Decimal(18,2), value: maanedligLeje },
                 { name: 'maanedligUdgift', type: sql.Decimal(18,2), value: maanedligUdgift }
@@ -71,7 +71,7 @@ module.exports = function createUdlejningRouter(database) {
                            INSERTED.maanedlig_leje    AS maanedligLeje,
                            INSERTED.maanedlig_udgift  AS maanedligUdgift
                     WHERE [case_id] = @caseId
-                `, params);
+                `, sqlParametre);
                 return res.status(200).json({
                     message: 'Udlejning opdateret.',
                     udlejning: opdateret[0]
@@ -85,7 +85,7 @@ module.exports = function createUdlejningRouter(database) {
                        INSERTED.maanedlig_leje   AS maanedligLeje,
                        INSERTED.maanedlig_udgift AS maanedligUdgift
                 VALUES (@caseId, @maanedligLeje, @maanedligUdgift)
-            `, params);
+            `, sqlParametre);
 
             return res.status(201).json({
                 message: 'Udlejning gemt.',

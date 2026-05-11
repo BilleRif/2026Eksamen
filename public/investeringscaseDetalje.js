@@ -23,6 +23,7 @@ document.querySelectorAll('[data-format-number]').forEach(input => {
 // Trin 1: Køb og omkostninger
 
 async function hentKoebsomkostninger() {
+    // Købsomkostninger bruges både i listen og senere som startværdi i simulationen.
     const liste = document.getElementById('koeb-liste');
     const total = document.getElementById('koeb-total');
     try {
@@ -30,12 +31,14 @@ async function hentKoebsomkostninger() {
         const data = await response.json();
         liste.innerHTML = '';
         if (data.length === 0) {
+            // En tom liste er gyldig, så brugeren kan starte med de andre trin.
             liste.innerHTML = '<li>Ingen omkostninger endnu.</li>';
             total.textContent = 'Total: 0 kr';
             return;
         }
         let sum = 0;
         data.forEach(k => {
+            // Totalen beregnes i browseren, så brugeren får hurtig feedback.
             sum += Number(k.beloeb);
             const li = document.createElement('li');
             li.textContent = `${k.beskrivelse}: ${formatKr(k.beloeb)} kr `;
@@ -54,6 +57,7 @@ async function hentKoebsomkostninger() {
 }
 
 async function sletKoebsomkostning(id) {
+    // Sletning bekræftes, fordi beløbet påvirker simulationen.
     if (!confirm('Slet denne omkostning?')) return;
     try {
         const response = await fetch(`/api/koebsomkostning/${id}`, { method: 'DELETE' });
@@ -70,6 +74,7 @@ async function sletKoebsomkostning(id) {
 
 document.getElementById('koeb-form').addEventListener('submit', async function(event) {
     event.preventDefault();
+    // Formularen gemmer én omkostningslinje ad gangen.
     const status = document.getElementById('koeb-status');
     const beskrivelse = document.getElementById('koeb-beskrivelse').value.trim();
     const beloeb = parseFormattedNumber(document.getElementById('koeb-beloeb').value);
@@ -95,6 +100,7 @@ document.getElementById('koeb-form').addEventListener('submit', async function(e
 
 async function hentFinansiering() {
     try {
+        // Hvis finansiering allerede er gemt, udfyldes formularen automatisk.
         const response = await fetch(`/api/finansiering?caseId=${CASE_ID}`);
         if (!response.ok) return;
         const data = await response.json();
@@ -114,6 +120,7 @@ document.getElementById('finansiering-form').addEventListener('submit', async fu
     event.preventDefault();
     const status = document.getElementById('finansiering-status');
 
+    // Payload matcher finansierings-routen og bruger tal uden tusindtalsprikker.
     const payload = {
         caseId:        CASE_ID,
         laanebeloeb:   parseFormattedNumber(document.getElementById('laanebeloeb').value),
@@ -140,6 +147,7 @@ document.getElementById('finansiering-form').addEventListener('submit', async fu
 // Trin 3: Renovering
 
 async function hentRenoveringer() {
+    // Renoveringer kan påvirke bestemte år i simulationen.
     const liste = document.getElementById('renovering-liste');
     try {
         const response = await fetch(`/api/renovering?caseId=${CASE_ID}`);
@@ -166,6 +174,7 @@ async function hentRenoveringer() {
 }
 
 async function sletRenovering(id) {
+    // Brugeren skal bekræfte, før en renoveringslinje fjernes.
     if (!confirm('Slet denne renovering?')) return;
     try {
         const response = await fetch(`/api/renovering/${id}`, { method: 'DELETE' });
@@ -184,11 +193,12 @@ document.getElementById('renovering-form').addEventListener('submit', async func
     event.preventDefault();
     const status = document.getElementById('renovering-status');
 
+    // Backend forventer feltet aar uden dansk å i API-navnet.
     const payload = {
         caseId:      CASE_ID,
         beskrivelse: document.getElementById('ren-beskrivelse').value.trim(),
         beloeb:      parseFormattedNumber(document.getElementById('ren-beloeb').value),
-        år:         Number(document.getElementById('ren-år').value)
+        aar:         Number(document.getElementById('ren-år').value)
     };
 
     try {
@@ -212,6 +222,7 @@ document.getElementById('renovering-form').addEventListener('submit', async func
 // Trin 4: Driftsbudget
 
 async function hentDriftsudgifter() {
+    // Driftsudgifter gemmes månedligt, men vises også som årlig total.
     const liste = document.getElementById('drift-liste');
     const total = document.getElementById('drift-total');
     try {
@@ -243,6 +254,7 @@ async function hentDriftsudgifter() {
 }
 
 async function sletDriftsudgift(id) {
+    // Driftsbudgettet opdateres efter sletning, så totalen passer.
     if (!confirm('Slet denne driftsudgift?')) return;
     try {
         const response = await fetch(`/api/driftsudgift/${id}`, { method: 'DELETE' });
@@ -261,6 +273,7 @@ document.getElementById('drift-form').addEventListener('submit', async function(
     event.preventDefault();
     const status = document.getElementById('drift-status');
 
+    // Én linje kan fx være forsikring, ejendomsskat eller fællesudgift.
     const payload = {
         caseId:       CASE_ID,
         navn:         document.getElementById('drift-navn').value.trim(),
@@ -287,6 +300,7 @@ document.getElementById('drift-form').addEventListener('submit', async function(
 // Trin 5: Udlejning
 
 function opdaterUdlejningsTotal() {
+    // Netto-leje vises live, mens brugeren skriver.
     const leje   = parseFormattedNumber(document.getElementById('månedlig-leje').value);
     const udgift = parseFormattedNumber(document.getElementById('månedlig-udgift').value);
     const netto  = leje - udgift;
@@ -296,6 +310,7 @@ function opdaterUdlejningsTotal() {
 
 async function hentUdlejning() {
     try {
+        // Hvis der allerede er gemt udlejningstal, udfyldes trin 5.
         const response = await fetch(`/api/udlejning?caseId=${CASE_ID}`);
         if (!response.ok) return;
         const data = await response.json();
@@ -315,6 +330,7 @@ document.getElementById('udlejning-form').addEventListener('submit', async funct
     event.preventDefault();
     const status = document.getElementById('udlejning-status');
 
+    // Udlejning har kun én række pr. case, så backend opretter eller opdaterer.
     const payload = {
         caseId:          CASE_ID,
         maanedligLeje:   parseFormattedNumber(document.getElementById('månedlig-leje').value),
@@ -347,6 +363,7 @@ const SIMULATION_AAR = 30;
 let simChart = null;
 
 function byggSimParametre(fuldCase) {
+    // Samler de gemte delbudgetter til det format simulationen forventer.
     const koebSum = (fuldCase.koebsomkostninger || [])
         .reduce((acc, k) => acc + Number(k.beloeb), 0);
 
@@ -381,6 +398,7 @@ function byggSimParametre(fuldCase) {
 }
 
 function tegnSimGraf(simulation) {
+    // Grafen tegnes om hver gang brugeren kører simulationen.
     const canvas = document.getElementById('sim-chart');
     const labels = simulation.map(p => `År ${p.year}`);
 
@@ -427,6 +445,7 @@ function tegnSimGraf(simulation) {
 }
 
 document.getElementById('sim-button').addEventListener('click', async function () {
+    // Simulationen køres først, når brugeren selv trykker på knappen.
     const status = document.getElementById('sim-status');
     status.textContent = 'Henter data og kører simulation...';
 
@@ -473,6 +492,7 @@ hentUdlejning();
 // 5-trins flow
 // Viser ét trin ad gangen. Hvis JavaScript fejler, vises alle trin stadig.
 function showStep(target) {
+    // Trinvisningen er kun visuel; data gemmes løbende i hvert trin.
     const n = String(target);
     document.querySelectorAll('[data-step]').forEach(section => {
         section.classList.toggle('active', section.dataset.step === n);

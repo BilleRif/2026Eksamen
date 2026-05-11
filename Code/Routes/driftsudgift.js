@@ -16,7 +16,7 @@ module.exports = function createDriftsudgiftRouter(database) {
         }
 
         try {
-            const rows = await database.query(`
+            const rækker = await database.query(`
                 SELECT [driftsudgift_id] AS driftsudgiftId,
                        [case_id]         AS caseId,
                        [navn],
@@ -26,7 +26,7 @@ module.exports = function createDriftsudgiftRouter(database) {
                 ORDER BY [driftsudgift_id] ASC
             `, [{ name: 'caseId', type: sql.Int, value: caseId }]);
 
-            return res.status(200).json(rows);
+            return res.status(200).json(rækker);
         } catch (error) {
             return next(error);
         }
@@ -49,7 +49,7 @@ module.exports = function createDriftsudgiftRouter(database) {
         }
 
         try {
-            const rows = await database.query(`
+            const rækker = await database.query(`
                 INSERT INTO [dbo].[Driftsudgift] ([case_id],[navn],[beloeb_maaned])
                 OUTPUT INSERTED.driftsudgift_id AS driftsudgiftId,
                        INSERTED.case_id AS caseId,
@@ -64,7 +64,7 @@ module.exports = function createDriftsudgiftRouter(database) {
 
             return res.status(201).json({
                 message: 'Driftsudgift tilføjet.',
-                driftsudgift: rows[0]
+                driftsudgift: rækker[0]
             });
         } catch (error) {
             return next(error);
@@ -80,13 +80,13 @@ module.exports = function createDriftsudgiftRouter(database) {
         }
 
         try {
-            const deleted = await database.query(`
+            const slettedeRækker = await database.query(`
                 DELETE FROM [dbo].[Driftsudgift]
                 OUTPUT DELETED.driftsudgift_id AS driftsudgiftId
                 WHERE [driftsudgift_id] = @id
             `, [{ name: 'id', type: sql.Int, value: id }]);
 
-            if (deleted.length === 0) {
+            if (slettedeRækker.length === 0) {
                 return res.status(404).json({ error: 'Driftsudgiften blev ikke fundet.' });
             }
             return res.status(200).json({ message: 'Driftsudgift slettet.' });

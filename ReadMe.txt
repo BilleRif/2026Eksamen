@@ -31,7 +31,7 @@ Testene dækker centrale beregnings- og valideringsfunktioner:
 
 - finansieringsBeregner
 - simuleringBeregner
-- ejendomValidator
+- ejendomsValidering
 
 Såfremt .env filen ikke allerede findes.
 Så skal den oprettes i roden.

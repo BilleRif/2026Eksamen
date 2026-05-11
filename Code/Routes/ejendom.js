@@ -1,51 +1,54 @@
 const express = require('express');
 const { sql } = require('../Database/database');
-const { PropertyValidator } = require('../Models/ejendomsValidering');
+const { EjendomsValidering } = require('../Models/ejendomsValidering');
 
 // Én delt validator kan genbruges til alle requests.
-const propertyValidator = new PropertyValidator();
+const ejendomsValidering = new EjendomsValidering();
 
-const bracket = (name) => `[${String(name).replace(/]/g, ']]')}]`;
+// Pakker kolonnenavne ind i SQL-klammer.
+// Det er vigtigt, fordi nogle databaser kan have æ/ø/å i kolonnenavne.
+const sqlKolonne = (navn) => `[${String(navn).replace(/]/g, ']]')}]`;
 
-let ejendomColumnsCache = null;
+let ejendomKolonnerCache = null;
 
 // Finder de faktiske kolonnenavne i databasen.
 // Det gør routen robust, hvis databasen stadig har en ældre navngivning.
-async function getEjendomColumns(database) {
-    if (ejendomColumnsCache) {
-        return ejendomColumnsCache;
+async function hentEjendomKolonner(database) {
+    if (ejendomKolonnerCache) {
+        return ejendomKolonnerCache;
     }
 
-    const rows = await database.query(`
+    const rækker = await database.query(`
         SELECT COLUMN_NAME AS columnName
         FROM INFORMATION_SCHEMA.COLUMNS
         WHERE TABLE_NAME = 'Ejendom'
           AND TABLE_SCHEMA = 'dbo'
     `);
-    const names = new Set(rows.map(row => row.columnName));
+    const navne = new Set(rækker.map(række => række.columnName));
 
-    ejendomColumnsCache = {
-        bbrId: names.has('bbr_id') ? 'bbr_id' : null,
-        ejendomstype: names.has('ejendomstype') ? 'ejendomstype' : null,
-        byggeaar: names.has('byggeår') ? 'byggeår' : (names.has('byggeaar') ? 'byggeaar' : null),
-        boligareal: names.has('boligareal_m2') ? 'boligareal_m2' : null,
-        antalVaerelser: names.has('antal_værelser') ? 'antal_værelser' : (names.has('antal_vaerelser') ? 'antal_vaerelser' : null),
-        grundareal: names.has('grundareal_m2') ? 'grundareal_m2' : null,
-        hasOprettet: names.has('oprettet'),
-        hasSidstOpdateret: names.has('sidst_opdateret'),
-        hasArkiveret: names.has('arkiveret')
+    ejendomKolonnerCache = {
+        bbrId: navne.has('bbr_id') ? 'bbr_id' : null,
+        ejendomstype: navne.has('ejendomstype') ? 'ejendomstype' : null,
+        byggeaar: navne.has('byggeår') ? 'byggeår' : (navne.has('byggeaar') ? 'byggeaar' : null),
+        boligareal: navne.has('boligareal_m2') ? 'boligareal_m2' : null,
+        antalVaerelser: navne.has('antal_værelser') ? 'antal_værelser' : (navne.has('antal_vaerelser') ? 'antal_vaerelser' : null),
+        grundareal: navne.has('grundareal_m2') ? 'grundareal_m2' : null,
+        harOprettet: navne.has('oprettet'),
+        harSidstOpdateret: navne.has('sidst_opdateret'),
+        harArkiveret: navne.has('arkiveret')
     };
-    return ejendomColumnsCache;
+    return ejendomKolonnerCache;
 }
 
-function selectColumn(columns, key, alias) {
-    return columns[key]
-        ? `e.${bracket(columns[key])} AS ${alias}`
+function vælgKolonne(kolonner, nøgle, alias) {
+    // Hvis en ældre database mangler kolonnen, sender vi null i stedet for at fejle.
+    return kolonner[nøgle]
+        ? `e.${sqlKolonne(kolonner[nøgle])} AS ${alias}`
         : `NULL AS ${alias}`;
 }
 
 // Bygger SELECT-listen ud fra de kolonnenavne, databasen faktisk har.
-function buildEjendomSelectColumns(columns) {
+function bygEjendomSelectKolonner(kolonner) {
     // Henter også antal cases, så frontend kan vise det direkte.
     return `
     e.[ejendom_id]      AS ejendomId,
@@ -53,51 +56,54 @@ function buildEjendomSelectColumns(columns) {
     e.[husnummer],
     e.[postnummer],
     e.[bynavn],
-    ${selectColumn(columns, 'bbrId', 'bbrId')},
-    ${selectColumn(columns, 'ejendomstype', 'ejendomstype')},
-    ${selectColumn(columns, 'byggeaar', 'byggeaar')},
-    ${selectColumn(columns, 'boligareal', 'boligareal')},
-    ${selectColumn(columns, 'antalVaerelser', 'antalVaerelser')},
-    ${selectColumn(columns, 'grundareal', 'grundareal')},
-    ${columns.hasOprettet ? 'e.[oprettet]' : 'NULL'} AS createdAt,
-    ${columns.hasSidstOpdateret ? 'e.[sidst_opdateret]' : 'NULL'} AS sidstOpdateret,
-    ${columns.hasArkiveret ? 'e.[arkiveret]' : 'CAST(0 AS bit)'} AS arkiveret,
+    ${vælgKolonne(kolonner, 'bbrId', 'bbrId')},
+    ${vælgKolonne(kolonner, 'ejendomstype', 'ejendomstype')},
+    ${vælgKolonne(kolonner, 'byggeaar', 'byggeaar')},
+    ${vælgKolonne(kolonner, 'boligareal', 'boligareal')},
+    ${vælgKolonne(kolonner, 'antalVaerelser', 'antalVaerelser')},
+    ${vælgKolonne(kolonner, 'grundareal', 'grundareal')},
+    ${kolonner.harOprettet ? 'e.[oprettet]' : 'NULL'} AS createdAt,
+    ${kolonner.harSidstOpdateret ? 'e.[sidst_opdateret]' : 'NULL'} AS sidstOpdateret,
+    ${kolonner.harArkiveret ? 'e.[arkiveret]' : 'CAST(0 AS bit)'} AS arkiveret,
     COALESCE((SELECT COUNT(*) FROM [dbo].[InvesteringsCase] c
               WHERE c.[ejendom_id] = e.[ejendom_id]), 0) AS antalCases
 `;
 }
 
-function buildOptionalEjendomInsert(columns) {
-    const options = [
-        { column: columns.bbrId, parameter: '@bbrId' },
-        { column: columns.ejendomstype, parameter: '@ejendomstype' },
-        { column: columns.byggeaar, parameter: '@byggeaar' },
-        { column: columns.boligareal, parameter: '@boligareal' },
-        { column: columns.antalVaerelser, parameter: '@antalVaerelser' },
-        { column: columns.grundareal, parameter: '@grundareal' }
-    ].filter(option => option.column);
+function bygValgfriEjendomInsert(kolonner) {
+    // Ekstra BBR-felter tilføjes kun, hvis databasen har kolonnerne.
+    const muligheder = [
+        { kolonne: kolonner.bbrId, parameter: '@bbrId' },
+        { kolonne: kolonner.ejendomstype, parameter: '@ejendomstype' },
+        { kolonne: kolonner.byggeaar, parameter: '@byggeaar' },
+        { kolonne: kolonner.boligareal, parameter: '@boligareal' },
+        { kolonne: kolonner.antalVaerelser, parameter: '@antalVaerelser' },
+        { kolonne: kolonner.grundareal, parameter: '@grundareal' }
+    ].filter(mulighed => mulighed.kolonne);
 
     return {
-        columnsSql: options.map(option => `,${bracket(option.column)}`).join(''),
-        valuesSql: options.map(option => `,${option.parameter}`).join('')
+        kolonnerSql: muligheder.map(mulighed => `,${sqlKolonne(mulighed.kolonne)}`).join(''),
+        værdierSql: muligheder.map(mulighed => `,${mulighed.parameter}`).join('')
     };
 }
 
-function buildOptionalEjendomUpdate(columns) {
-    const options = [
-        { column: columns.bbrId, parameter: '@bbrId' },
-        { column: columns.ejendomstype, parameter: '@ejendomstype' },
-        { column: columns.byggeaar, parameter: '@byggeaar' },
-        { column: columns.boligareal, parameter: '@boligareal' },
-        { column: columns.antalVaerelser, parameter: '@antalVaerelser' },
-        { column: columns.grundareal, parameter: '@grundareal' }
-    ].filter(option => option.column);
+function bygValgfriEjendomUpdate(kolonner) {
+    // Bruges ved BBR-opdatering, hvor gamle databaser ikke altid har alle felter.
+    const muligheder = [
+        { kolonne: kolonner.bbrId, parameter: '@bbrId' },
+        { kolonne: kolonner.ejendomstype, parameter: '@ejendomstype' },
+        { kolonne: kolonner.byggeaar, parameter: '@byggeaar' },
+        { kolonne: kolonner.boligareal, parameter: '@boligareal' },
+        { kolonne: kolonner.antalVaerelser, parameter: '@antalVaerelser' },
+        { kolonne: kolonner.grundareal, parameter: '@grundareal' }
+    ].filter(mulighed => mulighed.kolonne);
 
-    return options.map(option => `,
-                    ${bracket(option.column)} = ${option.parameter}`).join('');
+    return muligheder.map(mulighed => `,
+                    ${sqlKolonne(mulighed.kolonne)} = ${mulighed.parameter}`).join('');
 }
 
 function parseEjendomId(value) {
+    // Alle id'er skal være positive heltal, før de bruges i SQL.
     const ejendomId = Number.parseInt(value, 10);
     return Number.isInteger(ejendomId) && ejendomId > 0 ? ejendomId : null;
 }
@@ -107,25 +113,26 @@ module.exports = function createEjendomRouter(database) {
     const api = express.Router();
 
     page.get('/', (req, res) => {
+        // Viser siden med adresseopslag og gemte ejendomme.
         res.render('ejendomme', { title: 'Opret ejendom' });
     });
 
     // Henter ejendomme. Arkiverede ejendomme kan skjules efter behov.
     api.get('/', async (req, res, next) => {
-        const includeArkiveret = req.query.includeArkiveret !== 'false';
+        const medArkiverede = req.query.includeArkiveret !== 'false';
         try {
-            const columns = await getEjendomColumns(database);
-            const ejendomSelectColumns = buildEjendomSelectColumns(columns);
+            const kolonner = await hentEjendomKolonner(database);
+            const ejendomSelectKolonner = bygEjendomSelectKolonner(kolonner);
             // Ældre databaser har ikke arkiveret-kolonnen, så filteret bruges kun når kolonnen findes.
-            const where = includeArkiveret || !columns.hasArkiveret ? '' : 'WHERE e.[arkiveret] = 0';
-            const orderBy = columns.hasArkiveret
+            const filter = medArkiverede || !kolonner.harArkiveret ? '' : 'WHERE e.[arkiveret] = 0';
+            const sortering = kolonner.harArkiveret
                 ? 'ORDER BY e.[arkiveret] ASC, e.[ejendom_id] DESC'
                 : 'ORDER BY e.[ejendom_id] DESC';
             const ejendomme = await database.query(`
-                SELECT ${ejendomSelectColumns}
+                SELECT ${ejendomSelectKolonner}
                 FROM [dbo].[Ejendom] e
-                ${where}
-                ${orderBy}
+                ${filter}
+                ${sortering}
             `);
             return res.status(200).json(ejendomme);
         } catch (error) {
@@ -141,18 +148,18 @@ module.exports = function createEjendomRouter(database) {
         }
 
         try {
-            const columns = await getEjendomColumns(database);
-            const ejendomSelectColumns = buildEjendomSelectColumns(columns);
-            const rows = await database.query(`
-                SELECT ${ejendomSelectColumns}
+            const kolonner = await hentEjendomKolonner(database);
+            const ejendomSelectKolonner = bygEjendomSelectKolonner(kolonner);
+            const rækker = await database.query(`
+                SELECT ${ejendomSelectKolonner}
                 FROM [dbo].[Ejendom] e
                 WHERE e.[ejendom_id] = @ejendomId
             `, [{ name: 'ejendomId', type: sql.Int, value: ejendomId }]);
 
-            if (rows.length === 0) {
+            if (rækker.length === 0) {
                 return res.status(404).json({ error: 'Ejendommen blev ikke fundet.' });
             }
-            return res.status(200).json(rows[0]);
+            return res.status(200).json(rækker[0]);
         } catch (error) {
             return next(error);
         }
@@ -160,39 +167,40 @@ module.exports = function createEjendomRouter(database) {
 
     // Opretter en ny ejendom.
     api.post('/', async (req, res, next) => {
-        const property = propertyValidator.normalize(req.body);
-        const validationError = propertyValidator.validate(property);
-        if (validationError) return res.status(400).json({ error: validationError });
+        // Input normaliseres først, så valideringen arbejder med rene værdier.
+        const ejendom = ejendomsValidering.normaliser(req.body);
+        const valideringsFejl = ejendomsValidering.valider(ejendom);
+        if (valideringsFejl) return res.status(400).json({ error: valideringsFejl });
 
         try {
-            const columns = await getEjendomColumns(database);
+            const kolonner = await hentEjendomKolonner(database);
             // Kun kolonner, der findes i databasen, bliver brugt i INSERT.
-            const insert = buildOptionalEjendomInsert(columns);
-            const rows = await database.query(`
+            const insert = bygValgfriEjendomInsert(kolonner);
+            const rækker = await database.query(`
                 INSERT INTO [dbo].[Ejendom] (
-                    [vejnavn],[husnummer],[postnummer],[bynavn]${insert.columnsSql}
+                    [vejnavn],[husnummer],[postnummer],[bynavn]${insert.kolonnerSql}
                 )
-                OUTPUT INSERTED.ejendom_id, ${columns.hasOprettet ? 'INSERTED.oprettet' : 'NULL AS oprettet'}
+                OUTPUT INSERTED.ejendom_id, ${kolonner.harOprettet ? 'INSERTED.oprettet' : 'NULL AS oprettet'}
                 VALUES (
-                    @vejnavn,@husnummer,@postnummer,@bynavn${insert.valuesSql}
+                    @vejnavn,@husnummer,@postnummer,@bynavn${insert.værdierSql}
                 )
             `, [
-                { name: 'vejnavn',        type: sql.NVarChar(100), value: property.vejnavn },
-                { name: 'husnummer',      type: sql.NVarChar(20),  value: property.husnummer },
-                { name: 'postnummer',     type: sql.NVarChar(10),  value: property.postnummer },
-                { name: 'bynavn',         type: sql.NVarChar(100), value: property.bynavn },
-                { name: 'bbrId',          type: sql.NVarChar(50),  value: property.bbrId          || null },
-                { name: 'ejendomstype',   type: sql.NVarChar(100), value: property.ejendomstype   || null },
-                { name: 'byggeaar',       type: sql.Int,           value: property.byggeaar       || null },
-                { name: 'boligareal',     type: sql.Decimal(10,2), value: property.boligareal     || null },
-                { name: 'antalVaerelser', type: sql.Int,           value: property.antalVaerelser || null },
-                { name: 'grundareal',     type: sql.Decimal(10,2), value: property.grundareal     || null },
+                { name: 'vejnavn',        type: sql.NVarChar(100), value: ejendom.vejnavn },
+                { name: 'husnummer',      type: sql.NVarChar(20),  value: ejendom.husnummer },
+                { name: 'postnummer',     type: sql.NVarChar(10),  value: ejendom.postnummer },
+                { name: 'bynavn',         type: sql.NVarChar(100), value: ejendom.bynavn },
+                { name: 'bbrId',          type: sql.NVarChar(50),  value: ejendom.bbrId          || null },
+                { name: 'ejendomstype',   type: sql.NVarChar(100), value: ejendom.ejendomstype   || null },
+                { name: 'byggeaar',       type: sql.Int,           value: ejendom.byggeaar       || null },
+                { name: 'boligareal',     type: sql.Decimal(10,2), value: ejendom.boligareal     || null },
+                { name: 'antalVaerelser', type: sql.Int,           value: ejendom.antalVaerelser || null },
+                { name: 'grundareal',     type: sql.Decimal(10,2), value: ejendom.grundareal     || null },
             ]);
 
             return res.status(201).json({
                 message:   'Ejendommen blev gemt.',
-                ejendomId: rows[0].ejendom_id,
-                createdAt: rows[0].oprettet
+                ejendomId: rækker[0].ejendom_id,
+                createdAt: rækker[0].oprettet
             });
         } catch (error) {
             return next(error);
@@ -201,34 +209,35 @@ module.exports = function createEjendomRouter(database) {
 
     // Opdaterer en eksisterende ejendom.
     api.put('/:id', async (req, res, next) => {
+        // PUT bruges når en gemt ejendom skal have friske oplysninger.
         const ejendomId = parseEjendomId(req.params.id);
-        const property = propertyValidator.normalize(req.body);
-        const validationError = propertyValidator.validate(property);
+        const ejendom = ejendomsValidering.normaliser(req.body);
+        const valideringsFejl = ejendomsValidering.valider(ejendom);
         if (!ejendomId) return res.status(400).json({ error: 'Ejendoms-id skal være et positivt heltal.' });
-        if (validationError) return res.status(400).json({ error: validationError });
+        if (valideringsFejl) return res.status(400).json({ error: valideringsFejl });
 
         try {
-            const columns = await getEjendomColumns(database);
+            const kolonner = await hentEjendomKolonner(database);
             // Kun kolonner, der findes i databasen, bliver opdateret.
-            const optionalUpdates = buildOptionalEjendomUpdate(columns);
-            const sidstOpdateretSet = columns.hasSidstOpdateret
+            const valgfriOpdateringer = bygValgfriEjendomUpdate(kolonner);
+            const sidstOpdateretSet = kolonner.harSidstOpdateret
                 ? ',\n                    [sidst_opdateret] = SYSDATETIME()'
                 : '';
-            const sidstOpdateretOutput = columns.hasSidstOpdateret
+            const sidstOpdateretOutput = kolonner.harSidstOpdateret
                 ? 'INSERTED.sidst_opdateret AS sidstOpdateret'
                 : 'NULL AS sidstOpdateret';
-            const createdAtOutput = columns.hasOprettet
+            const createdAtOutput = kolonner.harOprettet
                 ? 'INSERTED.oprettet AS createdAt'
                 : 'NULL AS createdAt';
             // Marker at ejendommen netop er blevet opdateret.
-            const rows = await database.query(`
+            const rækker = await database.query(`
                 UPDATE [dbo].[Ejendom]
                 SET
                     [vejnavn]         = @vejnavn,
                     [husnummer]       = @husnummer,
                     [postnummer]      = @postnummer,
                     [bynavn]          = @bynavn
-                    ${optionalUpdates}
+                    ${valgfriOpdateringer}
                     ${sidstOpdateretSet}
                 OUTPUT
                     INSERTED.ejendom_id      AS ejendomId,
@@ -237,24 +246,24 @@ module.exports = function createEjendomRouter(database) {
                 WHERE [ejendom_id] = @ejendomId
             `, [
                 { name: 'ejendomId',      type: sql.Int,           value: ejendomId },
-                { name: 'vejnavn',        type: sql.NVarChar(100), value: property.vejnavn },
-                { name: 'husnummer',      type: sql.NVarChar(20),  value: property.husnummer },
-                { name: 'postnummer',     type: sql.NVarChar(10),  value: property.postnummer },
-                { name: 'bynavn',         type: sql.NVarChar(100), value: property.bynavn },
-                { name: 'bbrId',          type: sql.NVarChar(50),  value: property.bbrId          || null },
-                { name: 'ejendomstype',   type: sql.NVarChar(100), value: property.ejendomstype   || null },
-                { name: 'byggeaar',       type: sql.Int,           value: property.byggeaar       || null },
-                { name: 'boligareal',     type: sql.Decimal(10,2), value: property.boligareal     || null },
-                { name: 'antalVaerelser', type: sql.Int,           value: property.antalVaerelser || null },
-                { name: 'grundareal',     type: sql.Decimal(10,2), value: property.grundareal     || null },
+                { name: 'vejnavn',        type: sql.NVarChar(100), value: ejendom.vejnavn },
+                { name: 'husnummer',      type: sql.NVarChar(20),  value: ejendom.husnummer },
+                { name: 'postnummer',     type: sql.NVarChar(10),  value: ejendom.postnummer },
+                { name: 'bynavn',         type: sql.NVarChar(100), value: ejendom.bynavn },
+                { name: 'bbrId',          type: sql.NVarChar(50),  value: ejendom.bbrId          || null },
+                { name: 'ejendomstype',   type: sql.NVarChar(100), value: ejendom.ejendomstype   || null },
+                { name: 'byggeaar',       type: sql.Int,           value: ejendom.byggeaar       || null },
+                { name: 'boligareal',     type: sql.Decimal(10,2), value: ejendom.boligareal     || null },
+                { name: 'antalVaerelser', type: sql.Int,           value: ejendom.antalVaerelser || null },
+                { name: 'grundareal',     type: sql.Decimal(10,2), value: ejendom.grundareal     || null },
             ]);
 
-            if (rows.length === 0) return res.status(404).json({ error: 'Ejendommen blev ikke fundet.' });
+            if (rækker.length === 0) return res.status(404).json({ error: 'Ejendommen blev ikke fundet.' });
             return res.status(200).json({
                 message:        'Ejendommen blev opdateret.',
-                ejendomId:      rows[0].ejendomId,
-                createdAt:      rows[0].createdAt,
-                sidstOpdateret: rows[0].sidstOpdateret
+                ejendomId:      rækker[0].ejendomId,
+                createdAt:      rækker[0].createdAt,
+                sidstOpdateret: rækker[0].sidstOpdateret
             });
         } catch (error) {
             return next(error);
@@ -269,12 +278,12 @@ module.exports = function createEjendomRouter(database) {
         const arkiveret = req.body.arkiveret === true || req.body.arkiveret === 'true';
 
         try {
-            const columns = await getEjendomColumns(database);
-            if (!columns.hasArkiveret) {
+            const kolonner = await hentEjendomKolonner(database);
+            if (!kolonner.harArkiveret) {
                 return res.status(400).json({ error: 'Arkivering kræver, at schema.sql er kørt på databasen.' });
             }
 
-            const rows = await database.query(`
+            const rækker = await database.query(`
                 UPDATE [dbo].[Ejendom]
                 SET [arkiveret] = @arkiveret
                 OUTPUT INSERTED.ejendom_id AS ejendomId,
@@ -284,11 +293,11 @@ module.exports = function createEjendomRouter(database) {
                 { name: 'ejendomId', type: sql.Int, value: ejendomId },
                 { name: 'arkiveret', type: sql.Bit, value: arkiveret ? 1 : 0 }
             ]);
-            if (rows.length === 0) return res.status(404).json({ error: 'Ejendommen blev ikke fundet.' });
+            if (rækker.length === 0) return res.status(404).json({ error: 'Ejendommen blev ikke fundet.' });
             return res.status(200).json({
                 message:   arkiveret ? 'Ejendommen blev arkiveret.' : 'Ejendommen blev gendannet.',
-                ejendomId: rows[0].ejendomId,
-                arkiveret: rows[0].arkiveret
+                ejendomId: rækker[0].ejendomId,
+                arkiveret: rækker[0].arkiveret
             });
         } catch (error) {
             return next(error);
@@ -301,16 +310,17 @@ module.exports = function createEjendomRouter(database) {
         if (!ejendomId) return res.status(400).json({ error: 'Ejendoms-id skal være et positivt heltal.' });
 
         try {
-            const deletedRows = await database.query(`
+            // Databasen afviser sletning, hvis andre tabeller stadig bruger ejendommen.
+            const slettedeRækker = await database.query(`
                 DELETE FROM [dbo].[Ejendom]
                 OUTPUT DELETED.ejendom_id AS ejendomId
                 WHERE [ejendom_id] = @ejendomId
             `, [{ name: 'ejendomId', type: sql.Int, value: ejendomId }]);
 
-            if (deletedRows.length === 0) return res.status(404).json({ error: 'Ejendommen blev ikke fundet.' });
+            if (slettedeRækker.length === 0) return res.status(404).json({ error: 'Ejendommen blev ikke fundet.' });
             return res.status(200).json({
                 message:   'Ejendommen blev slettet.',
-                ejendomId: deletedRows[0].ejendomId
+                ejendomId: slettedeRækker[0].ejendomId
             });
         } catch (error) {
             return next(error);

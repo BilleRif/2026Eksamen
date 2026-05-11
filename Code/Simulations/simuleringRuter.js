@@ -16,8 +16,10 @@ const NUMERIC_FIELDS = [
 // Beregner udviklingen for en case.
 router.post("/simulate", (req, res, next) => {
     try {
+        // Frontend sender alle simuleringsværdier i request body.
         const params = req.body || {};
 
+        // De vigtigste felter skal kunne laves om til tal.
         for (const key of NUMERIC_FIELDS) {
             const value = Number(params[key]);
             if (!Number.isFinite(value)) {
@@ -27,6 +29,7 @@ router.post("/simulate", (req, res, next) => {
             }
         }
 
+        // Antal år styrer hvor mange rækker simulationen returnerer.
         const years = Number.parseInt(params.years, 10);
         if (!Number.isInteger(years) || years <= 0) {
             return res.status(400).json({
@@ -34,12 +37,14 @@ router.post("/simulate", (req, res, next) => {
             });
         }
 
+        // Renoveringer er valgfrie, men hvis de sendes, skal de være en liste.
         if (params.renovations !== undefined && !Array.isArray(params.renovations)) {
             return res.status(400).json({
                 error: 'renovations skal være et array.'
             });
         }
 
+        // Selve beregningen ligger i simuleringBeregner, så routen kun validerer input.
         const result = simulateInvestment(params);
         res.json(result);
     } catch (error) {

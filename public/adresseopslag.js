@@ -1,13 +1,16 @@
 (function initializeAddressAutocomplete() {
+    // Samler hele adresseflowet på ejendomssiden.
     const input = document.getElementById('address-input');
     const form = document.getElementById('property-form');
     const saveButton = document.getElementById('save-property-button');
     let currentBbrData = null;
 
+    // Hvis siden ikke har adresseformularen, skal scriptet ikke gøre mere.
     if (!input || !form || !window.dawaAutocomplete) {
         return;
     }
 
+    // Alle DOM-felter samles ét sted, så resten af filen er lettere at læse.
     const fields = {
         street: document.getElementById('street'),
         houseNumber: document.getElementById('house-number'),
@@ -33,12 +36,14 @@
     let matrikelLayer = null;
 
     const setValue = (element, value) => {
+        // Hjælper med at undgå gentagne null-tjek ved udfyldning af formularen.
         if (element) {
             element.value = value || '';
         }
     };
 
     const renderAddressSummary = (result) => {
+        // Lige nu viser vi kun region, men funktionen gør det nemt at udvide senere.
         if (!fields.metadataSummary) {
             return;
         }
@@ -53,6 +58,7 @@
     const DATAFORSYNINGEN_TOKEN = '1ed09b52ec33567e762a62a31f8b5411';
 
     const initMap = (lat, lon) => {
+        // Leaflet-kortet oprettes kun én gang og genbruges ved næste adresse.
         map = L.map(fields.mapContainer).setView([lat, lon], 17);
 
         // Tjenesten kræver teksten 'TRUE' eller 'FALSE' her.
@@ -126,6 +132,7 @@
     };
 
     const loadAddressMetadata = async (adgangsadresseid) => {
+        // Henter ekstra adresseinfo og geometri fra vores DAWA-route.
         if (!fields.metadataStatus || !fields.metadataSummary) {
             return;
         }
@@ -162,6 +169,7 @@
     };
 
     const renderBbrSummary = (result) => {
+        // Viser de BBR-tal brugeren får gemt sammen med ejendommen.
         if (!fields.bbrSummary) {
             return;
         }
@@ -176,6 +184,7 @@
     };
 
     const loadBbrData = async (adgangsadresseid) => {
+        // BBR-data gemmes i currentBbrData, så submit kan sende dem med.
         if (!fields.bbrStatus || !fields.bbrSummary) {
             return;
         }
@@ -209,6 +218,7 @@
     window.dawaAutocomplete.dawaAutocomplete(input, {
         minLength: 2,
         select(selected) {
+            // Når brugeren vælger en adresse, udfyldes formularen automatisk.
             const data = selected && selected.data ? selected.data : {};
             const adgangsadresseid = data.adgangsadresseid || data.id || '';
 
@@ -238,6 +248,7 @@
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
+        // Payload matcher de felter, som /api/ejendom forventer.
         const payload = {
             vejnavn:        fields.street.value,
             husnummer:      fields.houseNumber.value,
@@ -260,6 +271,7 @@
         }
 
         try {
+            // Sender den valgte adresse og BBR-data til backend.
             const response = await fetch('/api/ejendom', {
                 method: 'POST',
                 headers: {
@@ -286,6 +298,7 @@
                 fields.saveStatus.textContent = error.message;
             }
         } finally {
+            // Knappen åbnes igen uanset om gem lykkes eller fejler.
             if (saveButton) {
                 saveButton.disabled = false;
             }

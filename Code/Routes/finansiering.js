@@ -14,7 +14,7 @@ module.exports = function createFinansieringRouter(database) {
         }
 
         try {
-            const rows = await database.query(`
+            const rækker = await database.query(`
                 SELECT [finansiering_id] AS finansieringId,
                        [case_id]         AS caseId,
                        [laanebeloeb],
@@ -26,7 +26,7 @@ module.exports = function createFinansieringRouter(database) {
                 WHERE [case_id] = @caseId
             `, [{ name: 'caseId', type: sql.Int, value: caseId }]);
 
-            return res.status(200).json(rows[0] || null);
+            return res.status(200).json(rækker[0] || null);
         } catch (error) {
             return next(error);
         }
@@ -34,6 +34,7 @@ module.exports = function createFinansieringRouter(database) {
 
     // Gemmer finansiering. Hvis den findes i forvejen, opdateres den.
     api.post('/', async function (req, res, next) {
+        // Formularen sender tekst, så tallene laves om før validering.
         const caseId       = Number.parseInt(req.body.caseId, 10);
         const laanebeloeb  = Number(req.body.laanebeloeb);
         const rentePct     = Number(req.body.rentePct);
@@ -59,7 +60,8 @@ module.exports = function createFinansieringRouter(database) {
         }
 
         try {
-            const params = [
+            // De samme parametre bruges både ved oprettelse og opdatering.
+            const sqlParametre = [
                 { name: 'caseId',        type: sql.Int,           value: caseId },
                 { name: 'laanebeloeb',   type: sql.Decimal(18,2), value: laanebeloeb },
                 { name: 'rentePct',      type: sql.Decimal(5,3),  value: rentePct },
@@ -78,7 +80,8 @@ module.exports = function createFinansieringRouter(database) {
             let finansieringId;
             let opdateret = false;
             if (eksisterer.length > 0) {
-                const rows = await database.query(`
+                // Hvis casen allerede har finansiering, overskrives den gamle række.
+                const rækker = await database.query(`
                     UPDATE [dbo].[Finansiering]
                     SET [laanebeloeb]    = @laanebeloeb,
                         [rente_pct]      = @rentePct,
@@ -87,11 +90,12 @@ module.exports = function createFinansieringRouter(database) {
                         [laanetype]      = @laanetype
                     OUTPUT INSERTED.finansiering_id AS finansieringId
                     WHERE [case_id] = @caseId
-                `, params);
-                finansieringId = rows[0].finansieringId;
+                `, sqlParametre);
+                finansieringId = rækker[0].finansieringId;
                 opdateret = true;
             } else {
-                const rows = await database.query(`
+                // Hvis casen ikke har finansiering endnu, oprettes en ny række.
+                const rækker = await database.query(`
                     INSERT INTO [dbo].[Finansiering] (
                         [case_id],[laanebeloeb],[rente_pct],
                         [loebetid_aar],[afdragsfri_aar],[laanetype]
@@ -101,10 +105,11 @@ module.exports = function createFinansieringRouter(database) {
                         @caseId,@laanebeloeb,@rentePct,
                         @loebetidAar,@afdragsfriAar,@laanetype
                     )
-                `, params);
-                finansieringId = rows[0].finansieringId;
+                `, sqlParametre);
+                finansieringId = rækker[0].finansieringId;
             }
 
+            // Frontend viser ydelsen med det samme efter gem.
             const maanedligYdelse = beregnMånedligYdelse(laanebeloeb, rentePct, loebetidAar, afdragsfriAar);
 
             return res.status(opdateret ? 200 : 201).json({

@@ -2,9 +2,12 @@
 
 (function initializeEjendomList() {
     const liste = document.getElementById('ejendom-list');
+
+    // Scriptet bruges kun på sider, hvor listen findes.
     if (!liste) return;
 
     const formatDato = (iso) => {
+        // Manglende datoer vises som en streg, så layoutet stadig ser pænt ud.
         if (!iso) return '—';
         return new Date(iso).toLocaleDateString('da-DK', {
             year: 'numeric', month: 'short', day: 'numeric'
@@ -13,16 +16,19 @@
 
     async function hentEjendomme() {
         try {
+            // Henter både aktive og arkiverede ejendomme til oversigten.
             const response = await fetch('/api/ejendom');
             const ejendomme = await response.json();
             liste.innerHTML = '';
 
+            // Tom liste håndteres her, så brugeren ikke ser et blankt felt.
             if (!Array.isArray(ejendomme) || ejendomme.length === 0) {
                 liste.innerHTML = '<li>Ingen ejendomme gemt endnu.</li>';
                 return;
             }
 
             ejendomme.forEach(e => {
+                // Hver ejendom bygges som et listepunkt med info og knapper.
                 const li = document.createElement('li');
                 li.className = 'ejendom-row' + (e.arkiveret ? ' arkiveret' : '');
 
@@ -45,6 +51,7 @@
                 info.appendChild(meta);
 
                 if (e.ejendomstype || e.byggeaar || e.boligareal) {
+                    // BBR-detaljer vises kun, hvis der faktisk er noget at vise.
                     const detaljer = document.createElement('p');
                     detaljer.className = 'case-desc';
                     const dele = [];
@@ -72,6 +79,7 @@
                 const arkivBtn = document.createElement('button');
                 arkivBtn.type = 'button';
                 arkivBtn.textContent = e.arkiveret ? 'Gendan' : 'Arkivér';
+                // Arkivering skjuler ejendommen i relevante dropdowns uden at slette historik.
                 arkivBtn.addEventListener('click', () => arkiver(e.ejendomId, !e.arkiveret));
 
                 const sletBtn = document.createElement('button');
@@ -102,6 +110,7 @@
     // Adressefelterne ændres ikke.
     async function opdaterBbr(ejendom) {
         try {
+            // Først hentes friske BBR-data ud fra det gemte adgangsadresse-id.
             const bbrRes = await fetch(`/api/bbr?adgangsadresseid=${encodeURIComponent(ejendom.bbrId)}`);
             const bbr = await bbrRes.json();
             if (!bbrRes.ok) {
@@ -109,6 +118,7 @@
                 return;
             }
 
+            // Adressefelterne bevares, mens BBR-felterne udskiftes med de nye værdier.
             const payload = {
                 vejnavn:        ejendom.vejnavn,
                 husnummer:      ejendom.husnummer,
@@ -122,6 +132,7 @@
                 grundareal:     bbr.grundareal
             };
 
+            // Gemmer de nye BBR-oplysninger på den eksisterende ejendom.
             const putRes = await fetch(`/api/ejendom/${ejendom.ejendomId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -132,6 +143,7 @@
                 alert(putResult.error || 'Kunne ikke opdatere ejendommen.');
                 return;
             }
+            // Listen hentes igen, så brugeren ser de opdaterede data med det samme.
             hentEjendomme();
         } catch (error) {
             alert('Noget gik galt under opdateringen.');
@@ -140,6 +152,7 @@
 
     async function arkiver(id, skalArkiveres) {
         try {
+            // Samme endpoint bruges til både arkivering og gendannelse.
             const response = await fetch(`/api/ejendom/${id}/arkiver`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -150,6 +163,7 @@
                 alert(result.error || 'Kunne ikke ændre status.');
                 return;
             }
+            // Efter ændringen genindlæses listen, så knappen skifter tekst.
             hentEjendomme();
         } catch (error) {
             alert('Noget gik galt.');
@@ -157,6 +171,7 @@
     }
 
     async function slet(id, label) {
+        // Sletning kræver bekræftelse, fordi handlingen ikke kan fortrydes.
         if (!confirm(`Slet ${label}? Dette kan ikke fortrydes.`)) return;
         try {
             const response = await fetch(`/api/ejendom/${id}`, { method: 'DELETE' });
@@ -165,6 +180,7 @@
                 alert(result.error || 'Kunne ikke slette.');
                 return;
             }
+            // Når sletningen lykkes, fjernes rækken fra visningen via en ny hentning.
             hentEjendomme();
         } catch (error) {
             alert('Noget gik galt.');

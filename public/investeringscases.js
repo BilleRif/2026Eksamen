@@ -3,6 +3,7 @@
 const valgteIds = new Set();
 
 async function hentEjendomme() {
+    // Dropdown'en viser kun ejendomme, der kan bruges til nye cases.
     const dropdown = document.getElementById('property');
     try {
         // Hent kun aktive ejendomme til dropdown'en.
@@ -28,6 +29,7 @@ function formatDato(iso) {
 }
 
 async function hentCases() {
+    // Henter case-oversigten og bygger listen fra bunden.
     const liste = document.getElementById('cases-list');
     try {
         const response = await fetch('/api/investment-cases');
@@ -35,6 +37,7 @@ async function hentCases() {
         liste.innerHTML = '';
 
         if (cases.length === 0) {
+            // Giver brugeren en tydelig tom tilstand.
             liste.innerHTML = '<li>Ingen cases endnu.</li>';
             return;
         }
@@ -95,6 +98,7 @@ async function hentCases() {
 }
 
 function toggleSammenligning(caseId, valgt) {
+    // Holder styr på de cases, brugeren vil sammenligne.
     if (valgt) {
         if (valgteIds.size >= 3) {
             // Maksimum 3 cases ad gangen — ellers bliver chart'et ulæseligt.
@@ -112,6 +116,7 @@ function toggleSammenligning(caseId, valgt) {
 }
 
 function opdaterCompareBar() {
+    // Sammenlign-knappen aktiveres først, når mindst to cases er valgt.
     const count = document.getElementById('compare-count');
     const button = document.getElementById('compare-button');
     count.textContent = `${valgteIds.size} valgt`;
@@ -120,6 +125,7 @@ function opdaterCompareBar() {
 
 async function duplikerCase(caseId) {
     try {
+        // Backend kopierer både casen og dens tilhørende budgetlinjer.
         const response = await fetch(`/api/investment-cases/${caseId}/duplicate`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -137,6 +143,7 @@ async function duplikerCase(caseId) {
 }
 
 async function sletCase(caseId, navn) {
+    // Sletning fjerner også tilhørende linjer, så brugeren skal bekræfte.
     if (!confirm(`Slet "${navn}"? Dette fjerner også alle tilknyttede linjer.`)) return;
     try {
         const response = await fetch(`/api/investment-cases/${caseId}`, { method: 'DELETE' });
@@ -154,6 +161,7 @@ async function sletCase(caseId, navn) {
 }
 
 document.getElementById('compare-button').addEventListener('click', () => {
+    // De valgte id'er sendes med i URL'en til sammenligningssiden.
     const ids = Array.from(valgteIds).join(',');
     window.location.href = `/investment-cases/compare?ids=${ids}`;
 });
@@ -161,6 +169,7 @@ document.getElementById('compare-button').addEventListener('click', () => {
 document.getElementById('case-form').addEventListener('submit', async function(event) {
     event.preventDefault();
 
+    // En case kræver kun ejendom, navn og valgfri beskrivelse.
     const navn = document.getElementById('navn').value.trim();
     const beskrivelse = document.getElementById('beskrivelse').value.trim();
     const ejendomId = Number.parseInt(document.getElementById('property').value, 10);
@@ -192,4 +201,5 @@ document.getElementById('case-form').addEventListener('submit', async function(e
 });
 
 hentCases();
+// Ejendomme hentes til oprettelsesformularens dropdown.
 hentEjendomme();
