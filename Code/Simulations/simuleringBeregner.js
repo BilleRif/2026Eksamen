@@ -1,7 +1,5 @@
 // Simulerer en investeringscase år for år.
-// params.renovations er valgfri og indeholder objekter med { aar, beloeb }.
-// En renovering trækkes fra cashflow OG egenkapital i det matchende år, så
-// brugerens planlagte forbedringer afspejles i grafen (krav 3.3 + 4 i kravspec).
+// Renoveringer er valgfrie og trækkes fra i det år, de hører til.
 function simulateInvestment(params) {
   const results = [];
   const renovations = Array.isArray(params.renovations) ? params.renovations : [];
@@ -25,7 +23,7 @@ function simulateInvestment(params) {
     // Årlige driftsomkostninger
     const expenses = params.expenses * 12;
 
-    // Sum af renoveringer planlagt for netop dette år (kan være 0 eller flere)
+    // Renoveringer i dette år
     const renovation = renovations
       .filter(r => Number(r.aar) === year)
       .reduce((sum, r) => sum + Number(r.beloeb), 0);
@@ -36,9 +34,7 @@ function simulateInvestment(params) {
     // Opdater gæld (kan ikke gå under 0)
     debt = Math.max(0, debt - repayment);
 
-    // Opdater egenkapital:
-    // - cashflow påvirker direkte (renovering er allerede trukket fra her)
-    // - afdrag øger også egenkapital (du "ejer" mere af huset)
+    // Opdater egenkapital med årets resultat og afdrag.
     equity += cashflow + repayment;
 
     // Gem resultat for året

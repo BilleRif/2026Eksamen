@@ -24,7 +24,7 @@ const anvendelseskoder = {
 
 const beboelseskoder = ['110', '120', '121', '130', '140', '150', '160', '190'];
 
-// Hjælper: Bygger URL til Datafordeler med credentials.
+// Bygger URL til Datafordeler med login.
 function bbrUrl(endpoint, queryParam, value) {
     const params = new URLSearchParams({
         [queryParam]: value,
@@ -35,8 +35,7 @@ function bbrUrl(endpoint, queryParam, value) {
     return `https://services.datafordeler.dk/BBR/BBRPublic/1/REST/${endpoint}?${params}`;
 }
 
-// Genbrugelig helper til eksterne API-kald.
-// Timeout gør at siden ikke hænger for evigt, hvis Dataforsyningen/Datafordeler ikke svarer.
+// Kalder et eksternt API og stopper, hvis det tager for lang tid.
 async function fetchJson(url) {
     const response = await fetch(url, {
         signal: AbortSignal.timeout(5000)
@@ -49,10 +48,7 @@ async function fetchJson(url) {
     return response.json();
 }
 
-// Grundareal hentes via DAWA's jordstykke-endpoint, IKKE via BBR.
-// Datafordelers BBR-grund returnerer ikke et arealfelt på vores opslag
-// (kun vandforsyning + afløbsforhold). DAWA peger på det matrikulære
-// jordstykke, hvor "registreretareal" er det officielle DK-grundareal i m².
+// Grundareal hentes fra DAWA, fordi BBR ikke giver arealet i dette opslag.
 async function fetchGrundarealFraDawa(adgangsadresseid) {
     try {
         const adgangsadresse = await fetchJson(
@@ -75,12 +71,12 @@ async function fetchGrundarealFraDawa(adgangsadresseid) {
 async function fetchBbrData(adgangsadresseid) {
     const dawaId = adgangsadresseid;
 
-    // Trin 1: Hent alle bygninger via husnummer
+    // BBR kan returnere flere bygninger på samme adresse.
     const bygningRes = await fetch(bbrUrl('bygning', 'husnummer', dawaId));
     const bygningData = await bygningRes.json();
     const alleBygninger = Array.isArray(bygningData) ? bygningData : [bygningData];
 
-    // Find hovedbygningen
+    // Vælg først en boligbygning. Hvis der ikke findes en, bruges første bygning.
     const beboelsesBygninger = alleBygninger.filter(b =>
         beboelseskoder.includes(String(b.byg021BygningensAnvendelse || ''))
     );
@@ -90,7 +86,7 @@ async function fetchBbrData(adgangsadresseid) {
 
     const bygningId = bygning?.id_lokalId || '';
 
-    // Trin 2: Hent enhed (BBR) og grundareal (DAWA-jordstykke) parallelt.
+    // Hent BBR-enhed og grundareal samtidig.
     let enhed = {};
     const [enhedRes, grundareal] = await Promise.all([
         bygningId
@@ -108,14 +104,15 @@ async function fetchBbrData(adgangsadresseid) {
 
     return {
         ejendomstype:   anvendelseskoder[anvendelseskode] || `Kode ${anvendelseskode}` || null,
-        byggeaar:       bygning?.['byg026Opførelsesår'] || bygning?.byg026Opfoerelsesaar || null,
+        // BBR-feltet kan komme med dansk eller omskrevet feltnavn.
+        byggeaar:       bygning?.['byg026Opførelsesaar'] || bygning?.['byg026Opfoerelsesaar'] || null,
         boligareal:     enhed?.enh026EnhedensSamledeAreal || bygning?.byg039BygningensSamledeBoligAreal || null,
         antalVaerelser: enhed?.['enh031AntalVærelser'] || null,
         grundareal:     grundareal || null,
     };
 }
 
-// GET /api/bbr?adgangsadresseid=...
+// Henter BBR-data for den valgte adresse.
 api.get('/', async (req, res, next) => {
     const adgangsadresseid = String(req.query.adgangsadresseid || '').trim();
 

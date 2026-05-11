@@ -3,11 +3,7 @@ const router = express.Router();
 
 const { simulateInvestment } = require("./simuleringBeregner");
 
-// Numeriske parametre simulationen forventer. Alle skal være endelige tal
-// (ikke NaN/Infinity). Vi bruger Number.isFinite + eksplicitte range-checks
-// fremfor falsy-checks fordi 0 er en legitim værdi for flere af felterne
-// (fx initialEquity hvis køb finansieres 100% via lån, eller interestRate
-// ved en 0%-rente-case).
+// Tal som simulationen kræver. 0 må gerne være en gyldig værdi.
 const NUMERIC_FIELDS = [
     'loanAmount',
     'initialEquity',
@@ -17,8 +13,7 @@ const NUMERIC_FIELDS = [
     'expenses'
 ];
 
-// POST /simulate — modtager case-parametre fra frontend og returnerer
-// 30-års forløb (egenkapital, cashflow, restgæld) som JSON.
+// Beregner udviklingen for en case.
 router.post("/simulate", (req, res, next) => {
     try {
         const params = req.body || {};

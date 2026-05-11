@@ -3,12 +3,10 @@ const { sql } = require('../Database/database');
 
 // Håndterer renoveringer for en investeringscase
 // Én case kan have flere renoveringslinjer
-// Samme mønster som koebsomkostning.js
 
 module.exports = function createRenoveringRouter(database) {
     const api = express.Router();
 
-    // GET /api/renovering?caseId=X
     // Henter alle renoveringer for en case
     api.get('/', async function (req, res, next) {
         const caseId = Number.parseInt(req.query.caseId, 10);
@@ -35,13 +33,12 @@ module.exports = function createRenoveringRouter(database) {
         }
     });
 
-    // POST /api/renovering
     // Tilføjer en ny renovering til en case
     api.post('/', async function (req, res, next) {
         const caseId      = Number.parseInt(req.body.caseId, 10);
         const beskrivelse = String(req.body.beskrivelse || '').trim();
         const beloeb      = Number(req.body.beloeb);
-        const aar         = Number.parseInt(req.body.aar, 10);
+        const aar        = Number.parseInt(req.body.aar, 10);
 
         if (!Number.isInteger(caseId) || caseId <= 0) {
             return res.status(400).json({ error: 'caseId skal være et positivt heltal.' });
@@ -81,7 +78,6 @@ module.exports = function createRenoveringRouter(database) {
         }
     });
 
-    // DELETE /api/renovering/:id
     // Sletter én renovering
     api.delete('/:id', async function (req, res, next) {
         const id = Number.parseInt(req.params.id, 10);

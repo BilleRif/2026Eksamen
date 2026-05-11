@@ -3,12 +3,10 @@ const { sql } = require('../Database/database');
 
 // Håndterer driftsudgifter for en investeringscase
 // Én case kan have flere driftsudgifter (forsikring, ejendomsskat osv.)
-// Samme mønster som koebsomkostning.js
 
 module.exports = function createDriftsudgiftRouter(database) {
     const api = express.Router();
 
-    // GET /api/driftsudgift?caseId=X
     // Henter alle driftsudgifter for en case
     api.get('/', async function (req, res, next) {
         const caseId = Number.parseInt(req.query.caseId, 10);
@@ -34,7 +32,6 @@ module.exports = function createDriftsudgiftRouter(database) {
         }
     });
 
-    // POST /api/driftsudgift
     // Tilføjer en ny driftsudgift til en case
     api.post('/', async function (req, res, next) {
         const caseId      = Number.parseInt(req.body.caseId, 10);
@@ -74,7 +71,6 @@ module.exports = function createDriftsudgiftRouter(database) {
         }
     });
 
-    // DELETE /api/driftsudgift/:id
     // Sletter én driftsudgift
     api.delete('/:id', async function (req, res, next) {
         const id = Number.parseInt(req.params.id, 10);

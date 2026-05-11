@@ -441,10 +441,8 @@ button.danger:hover {
     font-size: 0.95rem;
 }
 
-/* ─── 5-trins flow på case-detalje-siden ───
-   Progressive enhancement: hvis JS aldrig kører, vises alle trin under
-   hinanden (graceful fallback). Når JS er aktivt, sættes 'js-enhanced' på
-   body og kun det aktive trin vises. */
+/* 5-trins flow på case-detalje-siden.
+   Hvis JS fejler, vises alle trin stadig. */
 .step-bar {
     display: flex;
     gap: 0.5rem;

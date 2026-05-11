@@ -1,4 +1,4 @@
-// ─── Imports ───
+// Henter de moduler serveren bruger.
 const express = require('express');
 const path = require('path');
 const { passwordConfig } = require('./Database/konfiguration');
@@ -9,12 +9,12 @@ const simulationRoutes = require('./Simulations/simuleringRuter');
 const bbrApiRouter = require('./Routes/BBR');
 const dawaApiRouter = require('./Routes/dawa');
 const createFinansieringRouter = require('./Routes/finansiering');
-const createKoebsomkostningRouter = require('./Routes/koebsomkostning');
+const createKøbsomkostningRouter = require('./Routes/købsomkostning');
 const createRenoveringRouter = require('./Routes/renovering');
 const createDriftsudgiftRouter = require('./Routes/driftsudgift');
 const createUdlejningRouter = require('./Routes/udlejning');
 
-// ─── Express setup ───
+// Sætter Express-serveren op.
 const app = express();
 const PORT = process.env.PORT || 3000;
 let server;
@@ -26,7 +26,7 @@ app.set('views', path.join(__dirname, '..', 'views'));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use(express.json());
 
-// ─── Database-forbindelse ───
+// Opretter forbindelse til databasen.
 let db;
 
 function createUnavailableDatabase() {
@@ -58,7 +58,7 @@ async function startServer() {
     const ejendomRoutes = createEjendomRouter(db);
     const investmentCasesRoutes = createInvestmentCasesRouter(db);
 
-    // ─── Ruter ───
+    // Kobler sider og API'er på serveren.
     app.get('/', (req, res) => {
         res.render('forside', { title: 'Ejendomsinvesteringssystem' });
     });
@@ -71,17 +71,13 @@ async function startServer() {
     app.use('/api/bbr', bbrApiRouter);
     app.use('/api/dawa', dawaApiRouter);
     app.use('/api/finansiering', createFinansieringRouter(db).api);
-    app.use('/api/koebsomkostning', createKoebsomkostningRouter(db).api);
+    app.use('/api/koebsomkostning', createKøbsomkostningRouter(db).api);
     app.use('/api/renovering', createRenoveringRouter(db).api);
     app.use('/api/driftsudgift', createDriftsudgiftRouter(db).api);
     app.use('/api/udlejning', createUdlejningRouter(db).api);
 
-    // ─── Global error-middleware ───
-    // Centraliseret fejlhåndtering: alle async route-handlers kalder
-    // next(err) i deres catch-block, og denne middleware står for logging
-    // og response. Routes kan tagge fejl med err.status (HTTP-kode, default
-    // 500) og err.publicMessage (brugervenlig besked, default generisk).
-    // Pensum: F18 (Express middleware) + F19 (fejlhåndtering).
+    // Samlet fejlhåndtering.
+    // Samler fejl fra routes og sender en brugervenlig besked tilbage.
     app.use((err, req, res, next) => {
         const status = err.status || 500;
         const message = err.publicMessage || 'Der opstod en serverfejl.';
@@ -95,7 +91,7 @@ async function startServer() {
     server = app.listen(PORT, () => {
         console.log(`Server kører på http://localhost:${PORT}`);
         if (databaseError) {
-            console.log('Bemærk: Databasen er ikke forbundet, så databasefunktioner virker først når SQL Server kører.');
+            console.log('Bemærk: Databasen er ikke forbundet, så databasefunktioner virker først naar SQL Server kører.');
         }
     });
 

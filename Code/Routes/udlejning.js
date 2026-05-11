@@ -3,12 +3,10 @@ const { sql } = require('../Database/database');
 
 // Håndterer udlejningsdata for en investeringscase
 // Én case har én udlejningsrække (månedlig leje og udgift)
-// Samme mønster som finansiering.js
 
 module.exports = function createUdlejningRouter(database) {
     const api = express.Router();
 
-    // GET /api/udlejning?caseId=X
     // Henter udlejningsdata for en case
     api.get('/', async function (req, res, next) {
         const caseId = Number.parseInt(req.query.caseId, 10);
@@ -33,12 +31,7 @@ module.exports = function createUdlejningRouter(database) {
         }
     });
 
-    // POST /api/udlejning
-    // Upsert: gemmer eller opdaterer udlejningsdata for en case.
-    // Casen har 0..1 udlejningsrækker (UNIQUE(case_id) i skemaet), så vi tjekker
-    // om der allerede findes en før vi vælger INSERT eller UPDATE. Det giver
-    // brugeren én knap i UI'et, der "Gemmer udlejning" uafhængigt af om casen
-    // havde data i forvejen.
+    // Gemmer udlejning. Hvis data findes i forvejen, opdateres de.
     api.post('/', async function (req, res, next) {
         const caseId          = Number.parseInt(req.body.caseId, 10);
         const maanedligLeje   = Number(req.body.maanedligLeje);
@@ -55,6 +48,7 @@ module.exports = function createUdlejningRouter(database) {
         }
 
         try {
+            // Der må kun være én udlejningsrække pr. case.
             const eksisterer = await database.query(`
                 SELECT [udlejning_id] AS id
                 FROM [dbo].[Udlejning]

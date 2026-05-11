@@ -1,14 +1,12 @@
 const express = require('express');
 const { sql } = require('../Database/database');
 
-// Håndterer købsomkostninger for en investeringscase
+// Håndterer koebsomkostninger for en investeringscase
 // Én case kan have flere omkostningslinjer (ejendomspris, tinglysning, advokat osv.)
-// Samme mønster som finansiering.js
 
-module.exports = function createKoebsomkostningRouter(database) {
+module.exports = function createKøbsomkostningRouter(database) {
     const api = express.Router();
 
-    // GET /api/koebsomkostning?caseId=X
     // Henter alle omkostningslinjer for en case
     api.get('/', async function (req, res, next) {
         const caseId = Number.parseInt(req.query.caseId, 10);
@@ -34,7 +32,6 @@ module.exports = function createKoebsomkostningRouter(database) {
         }
     });
 
-    // POST /api/koebsomkostning
     // Tilføjer en ny omkostningslinje til en case
     api.post('/', async function (req, res, next) {
         const caseId      = Number.parseInt(req.body.caseId, 10);
@@ -74,7 +71,6 @@ module.exports = function createKoebsomkostningRouter(database) {
         }
     });
 
-    // DELETE /api/koebsomkostning/:id
     // Sletter én omkostningslinje
     api.delete('/:id', async function (req, res, next) {
         const id = Number.parseInt(req.params.id, 10);

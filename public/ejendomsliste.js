@@ -1,7 +1,4 @@
-// ejendomsliste.js — viser oversigten over eksisterende ejendomsprofiler
-// på /properties under DAWA-formularen. Henter også metadata (oprettelse,
-// sidst opdateret, antal cases) og giver brugeren mulighed for at arkivere
-// eller gendanne profiler.
+// Viser ejendomme på /properties og lader brugeren arkivere eller gendanne dem.
 
 (function initializeEjendomList() {
     const liste = document.getElementById('ejendom-list');
@@ -61,10 +58,8 @@
                 const handlinger = document.createElement('div');
                 handlinger.className = 'ejendom-actions';
 
-                // Genindhent-knappen henter friske BBR-data via det gemte bbr_id
-                // og opdaterer ejendommen — opfylder kravet om at "ændre" en
-                // eksisterende profil. Disabled hvis bbr_id mangler (fx fordi
-                // ejendommen blev oprettet uden BBR-opslag).
+                // Genindhent bruger det gemte BBR-id til at opdatere ejendommen.
+                // Knappen slås fra, hvis ejendommen ikke har et BBR-id.
                 const opdaterBtn = document.createElement('button');
                 opdaterBtn.type = 'button';
                 opdaterBtn.textContent = 'Opdatér BBR';
@@ -83,9 +78,7 @@
                 sletBtn.type = 'button';
                 sletBtn.className = 'danger';
                 sletBtn.textContent = 'Slet';
-                // Slet er disabled hvis der er tilknyttede cases — FK ON DELETE
-                // CASCADE ville fjerne dem, men det er ikke det brugeren ønsker
-                // når de bare vil rydde op i en visning.
+                // Man kan ikke slette en ejendom, hvis den bruges af cases.
                 if (e.antalCases > 0) {
                     sletBtn.disabled = true;
                     sletBtn.title = 'Kan ikke slettes, da der findes tilknyttede cases. Arkivér i stedet.';
@@ -105,9 +98,8 @@
         }
     }
 
-    // Henter friske BBR-data og PUT'er ejendomsprofilen, så sidst_opdateret
-    // sættes til nu og BBR-felterne (byggeår, areal m.v.) opdateres hvis
-    // Datafordeleren har modtaget nyere data. Adressefelterne lades urørt.
+    // Henter nye BBR-data og opdaterer ejendommen.
+    // Adressefelterne ændres ikke.
     async function opdaterBbr(ejendom) {
         try {
             const bbrRes = await fetch(`/api/bbr?adgangsadresseid=${encodeURIComponent(ejendom.bbrId)}`);
@@ -179,8 +171,7 @@
         }
     }
 
-    // Eksponér hentEjendomme globalt, så adresseopslag.js kan kalde den
-    // efter en succesfuld POST og opdatere listen automatisk.
+    // Gør funktionen tilgængelig, så adresseopslag.js kan opdatere listen.
     window.refreshEjendomList = hentEjendomme;
     hentEjendomme();
 })();

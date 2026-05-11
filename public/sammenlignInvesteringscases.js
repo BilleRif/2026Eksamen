@@ -1,6 +1,4 @@
-// sammenlignInvesteringscases.js — sammenligningsside for 2-3 investeringscases.
-// Henter fuld case-data + kører simulation på klient-side, og tegner én linje
-// pr. case i samme graf for det valgte nøgletal (equity, cashflow eller debt).
+// Sammenligner 2-3 investeringscases og viser dem i samme graf.
 
 const FARVER = ['#0f766e', '#2563eb', '#b45309'];
 const SIMULATION_AAR = 30;
@@ -9,6 +7,7 @@ let aktuelChart = null;
 let simResultater = [];   // [{ case, simulation }]
 
 function hentIdsFraUrl() {
+    // Cases til sammenligning sendes med i URL'en som ids=1,2,3.
     const params = new URLSearchParams(window.location.search);
     const raw = params.get('ids') || '';
     return raw.split(',')
@@ -16,10 +15,10 @@ function hentIdsFraUrl() {
         .filter(id => Number.isInteger(id) && id > 0);
 }
 
-// Bygger simulationsparametre ud fra en fuld case.
-// Antagelser (dokumenteret i rapporten):
-//   - Lineær afdragsplan: årligt afdrag = lånebeløb / løbetid.
-//   - Startegenkapital = sum(købsomkostninger) - lånebeløb.
+// Bygger simulationsdata ud fra en case.
+// Antagelser:
+//   - Lineær afdragsplan: årligt afdrag = laanebeloeb / løbetid.
+//   - Startegenkapital = sum(koebsomkostninger) - laanebeloeb.
 //   - Driftsomkostninger = sum(driftsudgifter) + udlejnings-udgift, alt månedligt.
 //   - Renoveringer trækkes fra cashflow + equity i det matchende år.
 //   - Hvis casen ikke har finansiering eller udlejning, behandles tallene som 0.
@@ -40,7 +39,7 @@ function byggSimParametre(fuldCase) {
     const lejeMaaned   = udlejning ? Number(udlejning.maanedligLeje) : 0;
 
     const renovations = (fuldCase.renoveringer || []).map(r => ({
-        aar:    Number(r.aar),
+        år:    Number(r.aar),
         beloeb: Number(r.beloeb)
     }));
 
@@ -82,8 +81,8 @@ function formatKr(value) {
     return Number(value).toLocaleString('da-DK') + ' kr';
 }
 
-function byggNoegletalRaekker(resultater) {
-    // Returnerer et array af { label, values[] } hvor values matcher casernes rækkefølge.
+function byggNøgletalRækker(resultater) {
+    // Bygger rækker til nøgletalstabellen.
     const koebSum = (c) => (c.koebsomkostninger || []).reduce((a, k) => a + Number(k.beloeb), 0);
     const driftMd = (c) => (c.driftsudgifter || []).reduce((a, d) => a + Number(d.beloebMaaned), 0);
     const fin = (c) => c.finansiering;
@@ -120,7 +119,7 @@ function tegnTabel(resultater) {
         thead.appendChild(th);
     });
 
-    byggNoegletalRaekker(resultater).forEach(rk => {
+    byggNøgletalRækker(resultater).forEach(rk => {
         const tr = document.createElement('tr');
         const tdLabel = document.createElement('td');
         tdLabel.textContent = rk.label;
@@ -139,6 +138,7 @@ function tegnTabel(resultater) {
 
 function tegnGraf(resultater, metric) {
     const canvas = document.getElementById('compare-chart');
+    // Fjern den gamle graf, før en ny tegnes.
     if (aktuelChart) aktuelChart.destroy();
 
     const labels = Array.from({ length: SIMULATION_AAR }, (_, i) => `År ${i + 1}`);

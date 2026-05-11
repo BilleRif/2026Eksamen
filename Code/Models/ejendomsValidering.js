@@ -1,13 +1,6 @@
-// PropertyValidator samler input-håndteringen for ejendomsprofiler i én klasse:
-//   - normalize(): trimmer strenge og konverterer tal-felter til Number/null
-//   - validate(): returnerer en fejlbesked hvis et obligatorisk adressefelt mangler
-//
-// Klassen bruges af /api/ejendom-routeren før hver INSERT/UPDATE og er en del af
-// vores OO-struktur sammen med Database (krav: meningsfulde klasser med
-// tilhørende metoder).
+// Samler oprydning og validering af ejendomsdata.
 class PropertyValidator {
-    // Kun adressefelterne er obligatoriske — BBR-felter (byggeår, areal m.v.)
-    // kan mangle for nyere ejendomme uden registreret data.
+    // Adressefelter er obligatoriske. BBR-felter må gerne mangle.
     static REQUIRED_FIELDS = [
         ['vejnavn',    'Vejnavn mangler.'],
         ['husnummer',  'Husnummer mangler.'],
@@ -15,8 +8,7 @@ class PropertyValidator {
         ['bynavn',     'Bynavn mangler.'],
     ];
 
-    // Tomme strenge beholdes så validate() kan fange dem som "mangler".
-    // Tal-felter bliver Number eller null, så SQL-laget får rene typer.
+    // Rydder tekstfelter og gør talfelter klar til databasen.
     normalize(body = {}) {
         return {
             vejnavn:        String(body.vejnavn        || '').trim(),
@@ -38,8 +30,7 @@ class PropertyValidator {
     }
 }
 
-// Funktionelle wrappers — bevares så eksisterende unit tests og routes kan
-// importere dem uden ændringer. Begge peger på samme delte instans.
+// Beholder de gamle funktionsnavne, så resten af koden stadig virker.
 const _validator = new PropertyValidator();
 const normalizePropertyPayload = (body) => _validator.normalize(body);
 const validateProperty = (property) => _validator.validate(property);

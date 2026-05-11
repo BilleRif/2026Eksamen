@@ -1,31 +1,26 @@
-// investeringscaseDetalje.js
-// Håndterer alle 5 formularer på case-detaljesiden.
-// CASE_ID er sat i EJS-siden og bruges i alle API-kald.
+// Håndterer de 5 formularer på case-detaljesiden.
+// Bruger den aktuelle case i alle kald til serveren.
 
 // Lille hjælpefunktion til pæne tal i dansk format.
 const formatKr = (v) => Number(v || 0).toLocaleString('da-DK');
 
-// Beløbsfelterne vises med danske tusindtalsprikker (fx 1.000.000).
-// Før værdierne sendes til API'et, fjernes prikkerne igen, så backend får et tal.
+// Viser beloeb med danske tusindtalsprikker og sender dem som tal.
 function parseFormattedNumber(value) {
     return Number(String(value || '').replace(/\./g, '')) || 0;
 }
 
-// Number-inputs kan ikke vise tusindtalsprikker stabilt i browseren, så beløbsfelter
-// er text-inputs med inputmode="numeric". Denne funktion holder kun cifre og
-// formatterer dem løbende til dansk visning.
+// Beløbsfelter er tekstfelter, så vi selv kan formatere dem pænt.
 function formatNumberInput(input) {
     const digits = input.value.replace(/\D/g, '');
     input.value = digits ? Number(digits).toLocaleString('da-DK') : '';
 }
 
-// Alle felter med data-format-number får samme formattering, så vi undgår
-// gentaget input-logik i hver enkelt formular.
+// Giver alle beløbsfelter samme formatering.
 document.querySelectorAll('[data-format-number]').forEach(input => {
     input.addEventListener('input', () => formatNumberInput(input));
 });
 
-// ─── Trin 1: Køb og omkostninger ───
+// Trin 1: Køb og omkostninger
 
 async function hentKoebsomkostninger() {
     const liste = document.getElementById('koeb-liste');
@@ -96,7 +91,7 @@ document.getElementById('koeb-form').addEventListener('submit', async function(e
     }
 });
 
-// ─── Trin 2: Finansiering ───
+// Trin 2: Finansiering
 
 async function hentFinansiering() {
     try {
@@ -104,14 +99,14 @@ async function hentFinansiering() {
         if (!response.ok) return;
         const data = await response.json();
         if (!data) return;
-        // Pre-fyld formularen, så brugeren kan se og redigere eksisterende værdier.
+        // Udfyld formularen med eksisterende data.
         document.getElementById('laanebeloeb').value = formatKr(data.laanebeloeb);
         document.getElementById('rente').value      = data.rentePct;
-        document.getElementById('loebetid').value   = data.loebetidAar;
+        document.getElementById('løbetid').value   = data.loebetidAar;
         document.getElementById('afdragsfri').value = data.afdragsfriAar;
         document.getElementById('laanetype').value  = data.laanetype || '';
     } catch (error) {
-        // Fail silent — formularen forbliver tom
+        // Hvis der ikke findes data endnu, forbliver formularen tom.
     }
 }
 
@@ -123,7 +118,7 @@ document.getElementById('finansiering-form').addEventListener('submit', async fu
         caseId:        CASE_ID,
         laanebeloeb:   parseFormattedNumber(document.getElementById('laanebeloeb').value),
         rentePct:      Number(document.getElementById('rente').value),
-        loebetidAar:   Number(document.getElementById('loebetid').value),
+        loebetidAar:   Number(document.getElementById('løbetid').value),
         afdragsfriAar: Number(document.getElementById('afdragsfri').value) || 0,
         laanetype:     document.getElementById('laanetype').value.trim()
     };
@@ -142,7 +137,7 @@ document.getElementById('finansiering-form').addEventListener('submit', async fu
     }
 });
 
-// ─── Trin 3: Renovering ───
+// Trin 3: Renovering
 
 async function hentRenoveringer() {
     const liste = document.getElementById('renovering-liste');
@@ -193,7 +188,7 @@ document.getElementById('renovering-form').addEventListener('submit', async func
         caseId:      CASE_ID,
         beskrivelse: document.getElementById('ren-beskrivelse').value.trim(),
         beloeb:      parseFormattedNumber(document.getElementById('ren-beloeb').value),
-        aar:         Number(document.getElementById('ren-aar').value)
+        år:         Number(document.getElementById('ren-år').value)
     };
 
     try {
@@ -207,14 +202,14 @@ document.getElementById('renovering-form').addEventListener('submit', async func
         status.textContent = 'Renovering tilføjet!';
         document.getElementById('ren-beskrivelse').value = '';
         document.getElementById('ren-beloeb').value = '';
-        document.getElementById('ren-aar').value = '';
+        document.getElementById('ren-år').value = '';
         hentRenoveringer();
     } catch (error) {
         status.textContent = 'Noget gik galt.';
     }
 });
 
-// ─── Trin 4: Driftsbudget ───
+// Trin 4: Driftsbudget
 
 async function hentDriftsudgifter() {
     const liste = document.getElementById('drift-liste');
@@ -228,9 +223,9 @@ async function hentDriftsudgifter() {
             total.textContent = 'Total: 0 kr/md (0 kr/år)';
             return;
         }
-        let sumMaaned = 0;
+        let sumMåned = 0;
         data.forEach(d => {
-            sumMaaned += Number(d.beloebMaaned);
+            sumMåned += Number(d.beloebMaaned);
             const li = document.createElement('li');
             li.textContent = `${d.navn}: ${formatKr(d.beloebMaaned)} kr/md `;
             const slet = document.createElement('button');
@@ -241,7 +236,7 @@ async function hentDriftsudgifter() {
             li.appendChild(slet);
             liste.appendChild(li);
         });
-        total.textContent = `Total: ${formatKr(sumMaaned)} kr/md (${formatKr(sumMaaned * 12)} kr/år)`;
+        total.textContent = `Total: ${formatKr(sumMåned)} kr/md (${formatKr(sumMåned * 12)} kr/år)`;
     } catch (error) {
         liste.innerHTML = '<li>Kunne ikke hente driftsudgifter.</li>';
     }
@@ -289,11 +284,11 @@ document.getElementById('drift-form').addEventListener('submit', async function(
     }
 });
 
-// ─── Trin 5: Udlejning ───
+// Trin 5: Udlejning
 
 function opdaterUdlejningsTotal() {
-    const leje   = parseFormattedNumber(document.getElementById('maanedlig-leje').value);
-    const udgift = parseFormattedNumber(document.getElementById('maanedlig-udgift').value);
+    const leje   = parseFormattedNumber(document.getElementById('månedlig-leje').value);
+    const udgift = parseFormattedNumber(document.getElementById('månedlig-udgift').value);
     const netto  = leje - udgift;
     document.getElementById('udlejning-total').textContent =
         `Netto-leje: ${formatKr(netto)} kr/md (${formatKr(netto * 12)} kr/år)`;
@@ -305,16 +300,16 @@ async function hentUdlejning() {
         if (!response.ok) return;
         const data = await response.json();
         if (!data) return;
-        document.getElementById('maanedlig-leje').value   = formatKr(data.maanedligLeje);
-        document.getElementById('maanedlig-udgift').value = formatKr(data.maanedligUdgift);
+        document.getElementById('månedlig-leje').value   = formatKr(data.maanedligLeje);
+        document.getElementById('månedlig-udgift').value = formatKr(data.maanedligUdgift);
         opdaterUdlejningsTotal();
     } catch (error) {
-        // Fail silent
+        // Hvis der ikke findes data endnu, forbliver formularen tom.
     }
 }
 
-document.getElementById('maanedlig-leje').addEventListener('input', opdaterUdlejningsTotal);
-document.getElementById('maanedlig-udgift').addEventListener('input', opdaterUdlejningsTotal);
+document.getElementById('månedlig-leje').addEventListener('input', opdaterUdlejningsTotal);
+document.getElementById('månedlig-udgift').addEventListener('input', opdaterUdlejningsTotal);
 
 document.getElementById('udlejning-form').addEventListener('submit', async function(event) {
     event.preventDefault();
@@ -322,8 +317,8 @@ document.getElementById('udlejning-form').addEventListener('submit', async funct
 
     const payload = {
         caseId:          CASE_ID,
-        maanedligLeje:   parseFormattedNumber(document.getElementById('maanedlig-leje').value),
-        maanedligUdgift: parseFormattedNumber(document.getElementById('maanedlig-udgift').value)
+        maanedligLeje:   parseFormattedNumber(document.getElementById('månedlig-leje').value),
+        maanedligUdgift: parseFormattedNumber(document.getElementById('månedlig-udgift').value)
     };
 
     try {
@@ -341,11 +336,10 @@ document.getElementById('udlejning-form').addEventListener('submit', async funct
     }
 });
 
-// ─── Simulering for denne case ───
-// Bruger samme antagelser som sammenligningssiden, så graferne er
-// sammenlignelige på tværs:
-//   - Lineært årligt afdrag = lånebeløb / løbetid
-//   - Startegenkapital      = sum(købsomkostninger) - lånebeløb
+// Simulering for denne case
+// Bruger samme beregning som sammenligningssiden:
+//   - Lineært årligt afdrag = laanebeloeb / løbetid
+//   - Startegenkapital      = sum(koebsomkostninger) - laanebeloeb
 //   - Driftsomkostninger    = sum(driftsudgifter) + udlejnings-udgift (md)
 //   - Lejeindtægt           = udlejning.maanedligLeje (md)
 
@@ -368,10 +362,9 @@ function byggSimParametre(fuldCase) {
     const lejeMaaned  = udlejning ? Number(udlejning.maanedligLeje)   : 0;
     const udlUdgift   = udlejning ? Number(udlejning.maanedligUdgift) : 0;
 
-    // Renoveringer sendes med år+beløb. Backend trækker dem fra cashflow og
-    // egenkapital i det matchende år (krav 3.3: skal indgå i samlet analyse).
+    // Renoveringer sendes med år og beloeb, så de kan trækkes fra i det rigtige år.
     const renovations = (fuldCase.renoveringer || []).map(r => ({
-        aar:    Number(r.aar),
+        år:    Number(r.aar),
         beloeb: Number(r.beloeb)
     }));
 
@@ -438,6 +431,7 @@ document.getElementById('sim-button').addEventListener('click', async function (
     status.textContent = 'Henter data og kører simulation...';
 
     try {
+        // Hent hele casen, så simulationen faar alle delbudgetter med.
         const fuldRes = await fetch(`/api/investment-cases/${CASE_ID}/full`);
         if (!fuldRes.ok) {
             const err = await fuldRes.json().catch(() => ({}));
@@ -469,19 +463,15 @@ document.getElementById('sim-button').addEventListener('click', async function (
     }
 });
 
-// ─── Hent eksisterende data ved sideload ───
+// Hent eksisterende data, naar siden åbnes
 hentKoebsomkostninger();
 hentFinansiering();
 hentRenoveringer();
 hentDriftsudgifter();
 hentUdlejning();
 
-// ─── 5-trins flow ───
-// Viser ét trin ad gangen via klik på trinbar eller Næste/Tilbage-knapper.
-// Progressive enhancement: vi tilføjer 'js-enhanced' til body, og CSS
-// skjuler så de inaktive trin. Hvis JS af en eller anden grund ikke
-// kører (fx CSP-blok), forbliver alle trin synlige som fallback —
-// så brugeren kan stadig udfylde formularen.
+// 5-trins flow
+// Viser ét trin ad gangen. Hvis JavaScript fejler, vises alle trin stadig.
 function showStep(target) {
     const n = String(target);
     document.querySelectorAll('[data-step]').forEach(section => {

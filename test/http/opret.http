@@ -38,7 +38,7 @@ Content-Type: application/json
   "laanetype": "fastforrentet"
 }
 
-### Tilføj en købsomkostning
+### Tilføj en koebsomkostning
 POST http://localhost:3000/api/koebsomkostning
 Content-Type: application/json
 
@@ -56,7 +56,7 @@ Content-Type: application/json
   "caseId": 1,
   "beskrivelse": "Køkken renovering",
   "beloeb": 150000,
-  "aar": 5
+  "år": 5
 }
 
 ### Tilføj en driftsudgift

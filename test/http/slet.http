@@ -1,7 +1,7 @@
 ### Slet en investeringscase (kaskaderer til alle linjer via FK ON DELETE CASCADE)
 DELETE http://localhost:3000/api/investment-cases/1
 
-### Slet én købsomkostning
+### Slet én koebsomkostning
 DELETE http://localhost:3000/api/koebsomkostning/1
 
 ### Slet én renovering

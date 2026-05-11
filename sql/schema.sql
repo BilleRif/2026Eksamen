@@ -3,10 +3,9 @@
 --  CBS HA(IT) — Programmering og udvikling af små systemer, F2026
 --
 --  Kør dette script én gang mod en tom database for at oprette alle tabeller.
---  Skemaet er normaliseret til 3NF: hver investeringscase er knyttet til én
---  ejendom, og alle linje-poster (omkostninger, renoveringer, driftsudgifter)
---  refererer til en case via fremmednøgle med ON DELETE CASCADE, så sletning
---  af en case automatisk rydder op i de tilknyttede rækker.
+--  Hver investeringscase hører til én ejendom.
+--  Linjer som omkostninger, renoveringer og drift hører til en case
+--  og slettes automatisk sammen med den.
 --
 --  Læs ER-diagrammet i appendiks i rapporten for visualiseret oversigt.
 -- ============================================================================
@@ -17,8 +16,7 @@ GO
 
 -- ─── 1. Ejendom ─────────────────────────────────────────────────────────────
 -- Én ejendom kan have flere investeringscases (1:N).
--- BBR-felterne er nullable, fordi en bruger kan oprette en ejendom alene
--- ud fra DAWA-validering før BBR-data er hentet.
+-- BBR-felterne må være tomme, hvis BBR-data ikke er hentet endnu.
 
 IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Ejendom')
 BEGIN
@@ -43,9 +41,8 @@ END
 GO
 
 -- ─── 1a. Ejendom: kolonne-migrationer ──────────────────────────────────────
--- Idempotent migration for gruppemedlemmer der har en ældre version af
--- Ejendom-tabellen uden sidst_opdateret/arkiveret. Kører kun ALTER TABLE
--- hvis kolonnen mangler, så scriptet kan køres flere gange uden fejl.
+-- Tilføjer manglende kolonner, hvis en ældre database bruges.
+-- Scriptet kan derfor køres flere gange.
 
 IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
                WHERE TABLE_NAME = 'Ejendom' AND COLUMN_NAME = 'sidst_opdateret')
@@ -65,9 +62,27 @@ BEGIN
 END
 GO
 
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+           WHERE TABLE_NAME = 'Ejendom' AND COLUMN_NAME = N'antal_værelser')
+   AND NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_NAME = 'Ejendom' AND COLUMN_NAME = 'antal_vaerelser')
+BEGIN
+    EXEC sp_rename N'dbo.Ejendom.antal_værelser', 'antal_vaerelser', 'COLUMN';
+END
+GO
+
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+           WHERE TABLE_NAME = 'Ejendom' AND COLUMN_NAME = N'byggeår')
+   AND NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_NAME = 'Ejendom' AND COLUMN_NAME = 'byggeaar')
+BEGIN
+    EXEC sp_rename N'dbo.Ejendom.byggeår', 'byggeaar', 'COLUMN';
+END
+GO
+
 -- ─── 2. InvesteringsCase ────────────────────────────────────────────────────
--- En case repræsenterer ét scenarie for en ejendom (fx "Plan A — udlejning").
--- Unik (ejendom_id, navn) sikrer, at samme case-navn ikke gentages pr. ejendom.
+-- En case er ét scenarie for en ejendom.
+-- Samme ejendom må ikke have to cases med samme navn.
 
 IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'InvesteringsCase')
 BEGIN
@@ -89,8 +104,7 @@ END
 GO
 
 -- ─── 3. Finansiering ────────────────────────────────────────────────────────
--- Én case har 0..1 finansieringsrækker. Vi håndhæver 1:1 via UNIQUE(case_id),
--- så et POST mod en case der allerede har finansiering, fejler kontrolleret.
+-- En case kan højst have én finansiering.
 
 IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Finansiering')
 BEGIN
@@ -114,9 +128,44 @@ BEGIN
 END
 GO
 
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Finansiering' AND COLUMN_NAME = N'lånebeløb')
+   AND NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Finansiering' AND COLUMN_NAME = 'laanebeloeb')
+BEGIN
+    EXEC sp_rename N'dbo.Finansiering.lånebeløb', 'laanebeloeb', 'COLUMN';
+END
+GO
+
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Finansiering' AND COLUMN_NAME = N'løbetid_år')
+   AND NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Finansiering' AND COLUMN_NAME = 'loebetid_aar')
+BEGIN
+    EXEC sp_rename N'dbo.Finansiering.løbetid_år', 'loebetid_aar', 'COLUMN';
+END
+GO
+
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Finansiering' AND COLUMN_NAME = 'afdragsfri_aar')
+   AND NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Finansiering' AND COLUMN_NAME = N'afdragsfri_aar')
+BEGIN
+    EXEC sp_rename 'dbo.Finansiering.afdragsfri_aar', N'afdragsfri_aar', 'COLUMN';
+END
+GO
+
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Finansiering' AND COLUMN_NAME = N'lånetype')
+   AND NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Finansiering' AND COLUMN_NAME = 'laanetype')
+BEGIN
+    EXEC sp_rename N'dbo.Finansiering.lånetype', 'laanetype', 'COLUMN';
+END
+GO
+
 -- ─── 4. Koebsomkostning ─────────────────────────────────────────────────────
 -- Variabelt antal omkostningslinjer pr. case (ejendomspris, tinglysning,
 -- advokat, købsrådgivning m.v.).
+
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'Købsomkostning')
+   AND NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Koebsomkostning')
+BEGIN
+    EXEC sp_rename N'dbo.Købsomkostning', 'Koebsomkostning';
+END
+GO
 
 IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Koebsomkostning')
 BEGIN
@@ -132,6 +181,20 @@ BEGIN
         CONSTRAINT CK_Koebsomkostning_beloeb CHECK ([beloeb] >= 0)
     );
     CREATE INDEX IX_Koebsomkostning_case_id ON [dbo].[Koebsomkostning]([case_id]);
+END
+GO
+
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Koebsomkostning' AND COLUMN_NAME = N'købsomkostning_id')
+   AND NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Koebsomkostning' AND COLUMN_NAME = 'koebsomkostning_id')
+BEGIN
+    EXEC sp_rename N'dbo.Koebsomkostning.købsomkostning_id', 'koebsomkostning_id', 'COLUMN';
+END
+GO
+
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Koebsomkostning' AND COLUMN_NAME = N'beløb')
+   AND NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Koebsomkostning' AND COLUMN_NAME = 'beloeb')
+BEGIN
+    EXEC sp_rename N'dbo.Koebsomkostning.beløb', 'beloeb', 'COLUMN';
 END
 GO
 
@@ -157,8 +220,22 @@ BEGIN
 END
 GO
 
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Renovering' AND COLUMN_NAME = N'beløb')
+   AND NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Renovering' AND COLUMN_NAME = 'beloeb')
+BEGIN
+    EXEC sp_rename N'dbo.Renovering.beløb', 'beloeb', 'COLUMN';
+END
+GO
+
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Renovering' AND COLUMN_NAME = N'år')
+   AND NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Renovering' AND COLUMN_NAME = 'aar')
+BEGIN
+    EXEC sp_rename N'dbo.Renovering.år', 'aar', 'COLUMN';
+END
+GO
+
 -- ─── 6. Driftsudgift ────────────────────────────────────────────────────────
--- Variabelt antal månedlige driftsposter (forsikring, ejendomsskat, fællesudg.).
+-- Variabelt antal maanedlige driftsposter (forsikring, ejendomsskat, fællesudg.).
 
 IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Driftsudgift')
 BEGIN
@@ -177,9 +254,15 @@ BEGIN
 END
 GO
 
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Driftsudgift' AND COLUMN_NAME = N'beløb_måned')
+   AND NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Driftsudgift' AND COLUMN_NAME = 'beloeb_maaned')
+BEGIN
+    EXEC sp_rename N'dbo.Driftsudgift.beløb_måned', 'beloeb_maaned', 'COLUMN';
+END
+GO
+
 -- ─── 7. Udlejning ───────────────────────────────────────────────────────────
--- Én case har 0..1 udlejningsrækker (sat hvis brugeren markerer "udlej").
--- UNIQUE(case_id) håndhæver 1:1.
+-- En case kan højst have én udlejningsrække.
 
 IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Udlejning')
 BEGIN
@@ -196,6 +279,20 @@ BEGIN
         CONSTRAINT CK_Udlejning_leje    CHECK ([maanedlig_leje] >= 0),
         CONSTRAINT CK_Udlejning_udgift  CHECK ([maanedlig_udgift] >= 0)
     );
+END
+GO
+
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Udlejning' AND COLUMN_NAME = N'månedlig_leje')
+   AND NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Udlejning' AND COLUMN_NAME = 'maanedlig_leje')
+BEGIN
+    EXEC sp_rename N'dbo.Udlejning.månedlig_leje', 'maanedlig_leje', 'COLUMN';
+END
+GO
+
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Udlejning' AND COLUMN_NAME = N'månedlig_udgift')
+   AND NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Udlejning' AND COLUMN_NAME = 'maanedlig_udgift')
+BEGIN
+    EXEC sp_rename N'dbo.Udlejning.månedlig_udgift', 'maanedlig_udgift', 'COLUMN';
 END
 GO
 

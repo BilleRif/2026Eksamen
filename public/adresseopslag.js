@@ -27,7 +27,7 @@
         bbrSummary: document.getElementById('bbr-summary')
     };
 
-    // Leaflet-kortet initialiseres lazy ved første adressevalg og genbruges derefter.
+    // Kortet oprettes først, naar brugeren vælger en adresse.
     let map = null;
     let marker = null;
     let matrikelLayer = null;
@@ -48,20 +48,14 @@
         `;
     };
 
-    // Luftfoto kommer fra Dataforsyningens GeoDanmark Ortofoto WMS via det
-    // offentlige token-baserede gateway api.dataforsyningen.dk. Det er den
-    // kilde opgavebeskrivelsens "Kort Data"-sektion peger på. Token er en
-    // gratis registrering på dataforsyningen.dk — adskilt fra Datafordeler-
-    // service-kontoen vi bruger til BBR. Layer 'orto_foraar_10' giver natur-
-    // lig farve i 10 cm/pixel, og EPSG:3857 er understøttet så Leaflets
-    // default-CRS fungerer uden proj4.
+    // Luftfoto hentes fra Dataforsyningen med vores kort-token.
+    // Det er adskilt fra BBR-login og passer direkte til Leaflet.
     const DATAFORSYNINGEN_TOKEN = '1ed09b52ec33567e762a62a31f8b5411';
 
     const initMap = (lat, lon) => {
         map = L.map(fields.mapContainer).setView([lat, lon], 17);
 
-        // TRANSPARENT skal være streng-værdien 'TRUE' eller 'FALSE' — service-
-        // valideringen er case-sensitiv og afviser JS-boolean'ens 'false'-form.
+        // Tjenesten kræver teksten 'TRUE' eller 'FALSE' her.
         L.tileLayer.wms(
             `https://api.dataforsyningen.dk/orto_foraar_DAF?token=${DATAFORSYNINGEN_TOKEN}`,
             {
@@ -77,8 +71,7 @@
         marker = L.marker([lat, lon]).addTo(map);
     };
 
-    // Vis luftfoto for valgt adresse. Initialiserer kortet ved første kald,
-    // og genbruger samme instans ved efterfølgende valg (zoom + marker flyttes).
+    // Viser luftfoto for den valgte adresse.
     const updateMap = (koordinater, adressebetegnelse) => {
         if (!fields.mapContainer || !fields.aerialStatus) {
             return;
@@ -103,12 +96,8 @@
             : 'Kortet er opdateret.';
     };
 
-    // Tegn matrikelpolygonet som overlay på luftfotoet. Funktionen er
-    // idempotent — eksisterende layer fjernes før et nyt tegnes, så over-
-    // layet altid matcher den valgte adresse. Når geometri er null (adresse
-    // uden jordstykke eller fejlet backend-opslag) ryddes blot eventuelt
-    // eksisterende layer uden at tegne nyt. try/catch sikrer at en mal-
-    // formet GeoJSON ikke crasher resten af visningen.
+    // Tegner matriklen oven på kortet. Hvis der ikke er geometri,
+    // fjernes den gamle markering bare.
     const updateMatrikel = (geometri) => {
         if (!map) {
             return;
@@ -159,8 +148,7 @@
             }
 
             renderAddressSummary(result);
-            // Kommune kommer ikke med i DAWA's autocomplete-svar — kun via det
-            // efterfølgende /adgangsadresser-opslag, så vi sætter feltet her.
+            // Kommune kommer først med i det ekstra adresseopslag.
             setValue(fields.municipality, result.kommune);
             updateMap(result.koordinater, result.adressebetegnelse);
             updateMatrikel(result.geometri);
@@ -230,8 +218,7 @@
             setValue(fields.door, data.dør);
             setValue(fields.postalCode, data.postnr);
             setValue(fields.city, data.postnrnavn);
-            // Kommune findes ikke i autocomplete-svaret. Felt ryddes her og
-            // fyldes af loadAddressMetadata når /api/dawa/validate svarer.
+            // Kommune udfyldes senere af adresseopslaget.
             setValue(fields.municipality, '');
             setValue(fields.addressId, adgangsadresseid);
 
@@ -290,8 +277,7 @@
             if (fields.saveStatus) {
                 fields.saveStatus.textContent = `Ejendommen blev gemt med id ${result.ejendomId}.`;
             }
-            // Genindlæs ejendomslisten øverst på siden, så den nye ejendom
-            // dukker op uden at brugeren skal refreshe.
+            // Opdater listen uden at brugeren skal genindlæse siden.
             if (typeof window.refreshEjendomList === 'function') {
                 window.refreshEjendomList();
             }

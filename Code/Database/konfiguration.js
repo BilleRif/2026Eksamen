@@ -11,12 +11,8 @@ const envPath = envPaths.find(filePath => fs.existsSync(filePath));
 
 dotenv.config(envPath ? { path: envPath } : {});
 
-// Cross-platform tedious-config (mssql default driver). Virker på
-// Windows, macOS og Linux uden ODBC-dependencies. DB_INSTANCE er
-// valgfri; hvis den ikke er sat, bruges DB_PORT (default 1433).
-// Tedious tillader ikke port + instanceName samtidig — instance
-// vinder hvis begge er sat, fordi SQL Server Browser slår dynamisk
-// port op for instansen.
+// Databaseindstillinger til SQL Server.
+// Hvis DB_INSTANCE er sat, bruges den i stedet for DB_PORT.
 const passwordConfig = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,

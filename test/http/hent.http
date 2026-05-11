@@ -16,7 +16,7 @@ GET http://localhost:3000/api/investment-cases/1/full
 ### Hent finansiering for en case
 GET http://localhost:3000/api/finansiering?caseId=1
 
-### Hent købsomkostninger for en case
+### Hent koebsomkostninger for en case
 GET http://localhost:3000/api/koebsomkostning?caseId=1
 
 ### Hent renoveringer for en case

@@ -6,7 +6,7 @@
 // reducerer gæld men øger egenkapital, cashflow = indtægt - omkostninger -
 // rente - afdrag) er forkert, er hele simulationsbilledet vildledende.
 //
-// Vi tester invarianter snarere end specifikke kr-beløb, fordi det er de
+// Vi tester invarianter snarere end specifikke kr-beloeb, fordi det er de
 // strukturelle egenskaber, der bestemmer om grafen er korrekt:
 //   - Output har præcis params.years rækker
 //   - Gæld er monotont faldende (eller konstant 0 efter fuldt afdrag)
@@ -44,7 +44,7 @@ test('simulateInvestment: gæld er monotont ikke-stigende', () => {
     }
 });
 
-test('simulateInvestment: gæld går aldrig under 0 selv ved meget højt afdrag', () => {
+test('simulateInvestment: gæld gaar aldrig under 0 selv ved meget højt afdrag', () => {
     // Med årligt afdrag på 200.000 og kun 100.000 i lån skulle gælden være
     // 0 efter første år, ikke -100.000. Dette tester Math.max(0, ...) clampen.
     const result = simulateInvestment({

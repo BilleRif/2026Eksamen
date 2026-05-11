@@ -1,8 +1,6 @@
-// Annuitetsformel for månedlig ydelse på et lån.
-// Afdragsfrie år trækkes fra løbetiden, da hovedstolen først afdrages
-// efter den afdragsfrie periode. 0 % rente håndteres separat for at
-// undgå division med nul.
-function beregnMaanedligYdelse(laanebeloeb, rentePct, loebetidAar, afdragsfriAar = 0) {
+// Beregner den månedlige ydelse på et lån.
+// 0 % rente håndteres særskilt, så vi undgaar division med nul.
+function beregnMånedligYdelse(laanebeloeb, rentePct, loebetidAar, afdragsfriAar = 0) {
     const maaneder = (loebetidAar - afdragsfriAar) * 12;
     const maanedligRente = (rentePct / 100) / 12;
 
@@ -12,4 +10,4 @@ function beregnMaanedligYdelse(laanebeloeb, rentePct, loebetidAar, afdragsfriAar
     return laanebeloeb * maanedligRente / (1 - Math.pow(1 + maanedligRente, -maaneder));
 }
 
-module.exports = { beregnMaanedligYdelse };
+module.exports = { beregnMånedligYdelse };

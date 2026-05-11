@@ -37,7 +37,7 @@ module.exports = function createInvestmentCasesRouter(database) {
     page.get('/', (req, res) => {
         res.render('investeringscases', { title: 'Investeringscases' });
     });
-    // '/compare' skal ligge FØR '/:id', så Express ikke fanger 'compare' som et id.
+    // Sammenligningssiden skal registreres før de routes, der bruger id.
     page.get('/compare', (req, res) => {
         res.render('sammenlignInvesteringscases', { title: 'Sammenlign cases' });
     });
@@ -49,7 +49,6 @@ module.exports = function createInvestmentCasesRouter(database) {
         res.render('investeringscaseDetalje', { title: 'Investeringscase', caseId });
     });
 
-    // GET /api/investment-cases
     // Henter alle investeringscases
     api.get('/', async function (req, res, next) {
         try {
@@ -64,7 +63,6 @@ module.exports = function createInvestmentCasesRouter(database) {
         }
     });
 
-    // GET /api/investment-cases/:id
     // Henter én bestemt investeringscase
     api.get('/:id', async function (req, res, next) {
         const caseId = Number.parseInt(req.params.id, 10);
@@ -89,7 +87,6 @@ module.exports = function createInvestmentCasesRouter(database) {
         }
     });
 
-    // POST /api/investment-cases
     // Opretter en ny investeringscase for en eksisterende ejendom
     api.post('/', async function (req, res, next) {
         const data = normalizePayload(req.body);
@@ -146,11 +143,7 @@ module.exports = function createInvestmentCasesRouter(database) {
         }
     });
 
-    // DELETE /api/investment-cases/:id
-    // Sletter én investeringscase og dens tilknyttede linjer.
-    // Skemaet definerer ON DELETE CASCADE, men vi sletter child-rækker eksplicit
-    // her også, så funktionen virker på lokale databaser der er oprettet før
-    // cascade-constraints blev tilføjet.
+    // Sletter en investeringscase og de linjer, der hører til.
     api.delete('/:id', async function (req, res, next) {
         const caseId = Number.parseInt(req.params.id, 10);
 
@@ -159,6 +152,7 @@ module.exports = function createInvestmentCasesRouter(database) {
         }
 
         try {
+            // Sletningen samles i en transaktion, så casen ikke efterlades halvt slettet.
             const deleted = await database.query(`
                 SET XACT_ABORT ON;
                 BEGIN TRANSACTION;
@@ -198,10 +192,7 @@ module.exports = function createInvestmentCasesRouter(database) {
         }
     });
 
-    // POST /api/investment-cases/:id/duplicate
-    // Duplikerer en case inkl. alle tilknyttede linjer (omkostninger, finansiering,
-    // renoveringer, drift, udlejning). Bruges til scenarie-sammenligning hvor man
-    // vil teste en variant uden at miste den oprindelige case.
+    // Kopierer en case med alle tilhørende linjer.
     api.post('/:id/duplicate', async function (req, res, next) {
         const sourceId = Number.parseInt(req.params.id, 10);
         const onsketNavn = String(req.body.navn || '').trim();
@@ -211,7 +202,7 @@ module.exports = function createInvestmentCasesRouter(database) {
         }
 
         try {
-            // Hent kilde-casen først, så vi kender ejendomId og kan bygge nyt navn
+            // Hent den oprindelige case først.
             const sourceRows = await database.query(`
                 SELECT ${caseSelectColumns}
                 FROM [dbo].[InvesteringsCase]
@@ -223,9 +214,7 @@ module.exports = function createInvestmentCasesRouter(database) {
             }
             const source = sourceRows[0];
 
-            // Find et navn der ikke kolliderer med UNIQUE(ejendom_id, navn).
-            // Hvis brugeren ikke selv valgte navn: prøv "<navn> (kopi)", så
-            // "<navn> (kopi 2)", "<navn> (kopi 3)" osv. indtil et er ledigt.
+            // Find et ledigt navn til kopien.
             let nytNavn = onsketNavn || `${source.navn} (kopi)`;
             let suffix = 2;
             while (true) {
@@ -262,8 +251,7 @@ module.exports = function createInvestmentCasesRouter(database) {
             ]);
             const newCaseId = insertedCase[0].caseId;
 
-            // Kopier alle tilknyttede linjer over til den nye case.
-            // INSERT...SELECT bevarer alle felter undtagen PK og case_id.
+            // Kopier alle linjer over til den nye case.
             await database.execute(`
                 INSERT INTO [dbo].[Koebsomkostning] ([case_id],[beskrivelse],[beloeb])
                 SELECT @newCaseId, [beskrivelse], [beloeb]
@@ -319,9 +307,7 @@ module.exports = function createInvestmentCasesRouter(database) {
         }
     });
 
-    // GET /api/investment-cases/:id/full
-    // Henter en case med alle tilknyttede linjer i ét kald — bruges af
-    // sammenligningssiden, så frontend ikke skal lave 5 separate fetches per case.
+    // Henter en case med alle linjer i ét kald.
     api.get('/:id/full', async function (req, res, next) {
         const caseId = Number.parseInt(req.params.id, 10);
         if (!Number.isInteger(caseId) || caseId <= 0) {
@@ -347,6 +333,7 @@ module.exports = function createInvestmentCasesRouter(database) {
 
             const params = [{ name: 'caseId', type: sql.Int, value: caseId }];
 
+            // De uafhængige tabeller kan hentes samtidig.
             const [koeb, finansiering, renoveringer, drift, udlejning] = await Promise.all([
                 database.query(`
                     SELECT [koebsomkostning_id] AS id, [beskrivelse], [beloeb]
@@ -389,7 +376,6 @@ module.exports = function createInvestmentCasesRouter(database) {
         }
     });
 
-    // PUT /api/investment-cases/:id
     // Opdaterer navn og beskrivelse på en eksisterende case
     api.put('/:id', async function (req, res, next) {
         const caseId = Number.parseInt(req.params.id, 10);

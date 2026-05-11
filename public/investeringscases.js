@@ -1,12 +1,11 @@
-// investeringscases.js — oversigtsside over alle investeringscases.
-// Understøtter oprettelse, duplikering, sletning og udvalg til sammenligning.
+// Viser alle investeringscases og giver mulighed for at oprette, kopiere og slette dem.
 
 const valgteIds = new Set();
 
 async function hentEjendomme() {
     const dropdown = document.getElementById('property');
     try {
-        // includeArkiveret=false så arkiverede profiler ikke fremgår af dropdown'en
+        // Hent kun aktive ejendomme til dropdown'en.
         const response = await fetch('/api/ejendom?includeArkiveret=false');
         const ejendomme = await response.json();
         ejendomme.forEach(e => {

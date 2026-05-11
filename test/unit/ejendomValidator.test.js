@@ -1,4 +1,4 @@
-// Unit tests — ejendomValidator (input-håndtering for /api/ejendom)
+// Unit tests — ejendomsValidering (input-håndtering for /api/ejendom)
 //
 // Hvorfor er denne unit kritisk?
 // validateProperty + normalizePropertyPayload er det første led mellem rå
@@ -16,7 +16,7 @@ const assert = require('node:assert/strict');
 const {
     normalizePropertyPayload,
     validateProperty
-} = require('../../Code/Models/ejendomValidator');
+} = require('../../Code/Models/ejendomsValidering');
 
 test('validateProperty: returnerer null for fuldt udfyldt adresse', () => {
     const property = normalizePropertyPayload({

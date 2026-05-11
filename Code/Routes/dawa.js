@@ -15,12 +15,8 @@ async function fetchDataforsyningen(pathname) {
     return response.json();
 }
 
-// Henter jordstykkets polygon-geometri som GeoJSON og returnerer kun
-// geometry-objektet (egnet til L.geoJSON i frontend). DAWA leverer
-// polygonet i WGS84 (EPSG:4326) når format=geojson&srid=4326 sættes,
-// så Leaflets default-CRS kan rendere det uden konvertering. Ved fejl
-// eller ikke-OK svar returneres null, så /validate-endpointet ikke
-// brydes — kortet viser så bare luftfoto uden matrikel-overlay.
+// Henter matriklens geometri til kortet.
+// Hvis opslaget fejler, vises kortet bare uden matrikel.
 async function fetchJordstykkeGeometri(href) {
     try {
         const response = await fetch(`${href}?format=geojson&srid=4326`, {
@@ -37,11 +33,7 @@ async function fetchJordstykkeGeometri(href) {
     }
 }
 
-// GET /api/dawa/validate?adgangsadresseid=...
-// Validerer adressen og returnerer alle felter til brug i BBR-kaldet og kortet.
-// Inkluderer jordstykkets polygon-geometri (geometri-feltet) til matrikel-overlay
-// på luftfotoet — null hvis adressen ikke har et tilknyttet jordstykke (fx
-// midlertidige adresser) eller hvis jordstykke-opslaget fejler.
+// Henter adresseoplysninger og geometri til BBR-opslag og kort.
 api.get('/validate', async (req, res, next) => {
     const adgangsadresseid = String(req.query.adgangsadresseid || '').trim();
 
@@ -54,6 +46,7 @@ api.get('/validate', async (req, res, next) => {
             `/adgangsadresser/${encodeURIComponent(adgangsadresseid)}`
         );
 
+        // Nogle adresser har ikke et jordstykke, så geometri kan være tom.
         const geometri = result.jordstykke?.href
             ? await fetchJordstykkeGeometri(result.jordstykke.href)
             : null;

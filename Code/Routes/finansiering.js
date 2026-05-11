@@ -1,11 +1,10 @@
 const express = require('express');
 const { sql } = require('../Database/database');
-const { beregnMaanedligYdelse } = require('../Models/finansieringsBeregner');
+const { beregnMånedligYdelse } = require('../Models/finansieringsBeregner');
 
 module.exports = function createFinansieringRouter(database) {
     const api = express.Router();
 
-    // GET /api/finansiering?caseId=X
     // Henter finansiering for en bestemt case
     api.get('/', async function (req, res, next) {
         const caseId = Number.parseInt(req.query.caseId, 10);
@@ -33,10 +32,7 @@ module.exports = function createFinansieringRouter(database) {
         }
     });
 
-    // POST /api/finansiering
-    // Upsert: en case har 0..1 finansieringsrækker (UNIQUE(case_id) i skemaet),
-    // så vi UPDATE'er hvis der findes en og INSERT'er ellers. Det betyder at
-    // brugeren kan ændre finansiering uden først at slette den gamle række.
+    // Gemmer finansiering. Hvis den findes i forvejen, opdateres den.
     api.post('/', async function (req, res, next) {
         const caseId       = Number.parseInt(req.body.caseId, 10);
         const laanebeloeb  = Number(req.body.laanebeloeb);
@@ -45,10 +41,7 @@ module.exports = function createFinansieringRouter(database) {
         const afdragsfriAar = Number.parseInt(req.body.afdragsfriAar, 10) || 0;
         const laanetype    = String(req.body.laanetype || '').trim();
 
-        // Eksplicit type- og range-validering. Falsy-check (!value) er bevidst
-        // undgået fordi 0 er falsy: en 0%-rente er en legitim værdi som
-        // finansieringsBeregner.js håndterer. Kilde: F1 (truthy/falsy) og
-        // CHECK-constraints på [dbo].[Finansiering] i sql/schema.sql.
+        // Tjekker tal direkte, så 0 stadig er en gyldig værdi.
         if (!Number.isInteger(caseId) || caseId <= 0) {
             return res.status(400).json({ error: 'caseId skal være et positivt heltal.' });
         }
@@ -75,6 +68,7 @@ module.exports = function createFinansieringRouter(database) {
                 { name: 'laanetype',     type: sql.NVarChar(50),  value: laanetype || null }
             ];
 
+            // Der må kun være én finansiering pr. case.
             const eksisterer = await database.query(`
                 SELECT [finansiering_id] AS id
                 FROM [dbo].[Finansiering]
@@ -111,7 +105,7 @@ module.exports = function createFinansieringRouter(database) {
                 finansieringId = rows[0].finansieringId;
             }
 
-            const maanedligYdelse = beregnMaanedligYdelse(laanebeloeb, rentePct, loebetidAar, afdragsfriAar);
+            const maanedligYdelse = beregnMånedligYdelse(laanebeloeb, rentePct, loebetidAar, afdragsfriAar);
 
             return res.status(opdateret ? 200 : 201).json({
                 message: opdateret ? 'Finansiering opdateret.' : 'Finansiering gemt.',

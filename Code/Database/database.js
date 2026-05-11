@@ -1,11 +1,11 @@
 const sql = require('mssql');
 
 class Database {
-    // Constructor: gemmer config og sætter starttilstand
+    // Gemmer config og starttilstand
     constructor(config) {
         this.config = config;
-        this.poolconnection = null;   // connection pool - starter som null
-        this.connected = false;        // flag: er vi forbundet?
+        this.poolconnection = null;   // databaseforbindelse
+        this.connected = false;        // viser om vi er forbundet
     }
 
     // Opretter forbindelse til SQL Server
@@ -36,10 +36,7 @@ class Database {
         }
     }
 
-    // Kører en parametriseret query og returnerer rækkerne fra recordset.
-    // Bruges både til SELECT og til INSERT/UPDATE/DELETE med OUTPUT-klausul,
-    // hvor SQL Server returnerer den indsatte/opdaterede/slettede række.
-    // params er et array af { name, type, value } objekter.
+    // Kører en query med parametre og returnerer rækkerne.
     async query(query, params = []) {
         if (!this.poolconnection) {
             throw new Error('Databaseforbindelsen er ikke oprettet.');
@@ -51,7 +48,7 @@ class Database {
         return result.recordset;
     }
 
-    // Kører INSERT/UPDATE/DELETE og returnerer antal påvirkede rækker
+    // Kører INSERT/UPDATE/DELETE og returnerer antal ændrede rækker
     async execute(query, params = []) {
         const request = this.poolconnection.request();
         params.forEach(p => request.input(p.name, p.type, p.value));
@@ -60,7 +57,7 @@ class Database {
     }
 }
 
-// Factory-funktion: opretter Database-instans og forbinder
+// Opretter databaseobjektet og forbinder til databasen.
 const createDatabaseConnection = async (config) => {
     const database = new Database(config);
     await database.connect();
