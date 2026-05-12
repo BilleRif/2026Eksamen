@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body>
+    <!-- Side til at oprette ejendomme og se de ejendomme, der allerede er gemt. -->
     <header>
         <h1><%= title %></h1>
         <p>Adresseopslag via DAWA autocomplete</p>
@@ -19,6 +20,7 @@
     </header>
 
     <main>
+        <!-- Listen udfyldes af public/ejendomsliste.js. -->
         <section class="page-card">
             <h2>Eksisterende ejendomsprofiler</h2>
             <p class="help-text">
@@ -31,6 +33,7 @@
             </ul>
         </section>
 
+        <!-- Adresseformularen udfyldes automatisk, når brugeren vælger en DAWA-adresse. -->
         <section class="page-card">
             <h2>Ejendomsadresse</h2>
             <p>Begynd at skrive en dansk adresse. Naar du vælger et forslag, udfylder vi felterne nedenfor.</p>
@@ -95,23 +98,27 @@
 
             <section class="selection-box">
                 <h3>Valgt adresse</h3>
+                <!-- Teksten opdateres, når brugeren vælger et forslag i autocomplete. -->
                 <p id="selected-address-text">Ingen adresse valgt endnu.</p>
             </section>
 
             <section class="selection-box">
                 <h3>Yderligere adressedata</h3>
+                <!-- Metadata og matrikeldata hentes via /api/dawa. -->
                 <p id="metadata-status" class="help-text">Vælg en adresse for at hente tilknyttede metadata.</p>
                 <div id="metadata-summary"></div>
             </section>
 
             <section class="selection-box">
                 <h3>Luftfoto</h3>
+                <!-- Leaflet-kortet oprettes af adresseopslag.js, når koordinaterne findes. -->
                 <p id="aerial-status" class="help-text">Vælg en adresse for at vise luftfoto af ejendommen.</p>
                 <div id="address-map" class="address-map"></div>
             </section>
 
             <section class="selection-box">
                 <h3>Boligdata</h3>
+                <!-- BBR-data hentes via /api/bbr og gemmes sammen med ejendommen. -->
                 <p id="bbr-status" class="help-text">Vælg en adresse for at hente tilknyttede boligdata.</p>
                 <div id="bbr-summary"></div>
             </section>

@@ -8,6 +8,7 @@
 </head>
 
 <body>
+    <!-- Sammenligningssiden får case-id'er fra URL'en og henter resten via JavaScript. -->
     <header>
         <h1><%= title %></h1>
         <nav>
@@ -16,6 +17,7 @@
     </header>
     <main>
 
+        <!-- Tabellen bygges dynamisk af public/sammenlignInvesteringscases.js. -->
         <section class="page-card">
             <h2>Nøgletal pr. case</h2>
             <p id="compare-status" class="help-text">Henter cases...</p>
@@ -34,6 +36,7 @@
             </div>
         </section>
 
+        <!-- Grafen bruger Chart.js og kan skifte mellem tre nøgletal. -->
         <section class="page-card">
             <h2>Udvikling over 30 år</h2>
             <div class="field-group">

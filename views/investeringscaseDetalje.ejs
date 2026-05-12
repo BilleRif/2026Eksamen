@@ -10,6 +10,7 @@
 </head>
 
 <body>
+    <!-- Detaljesiden samler alle budgettrin for én investeringscase. -->
     <header>
         <h1>
             <%= title %>
@@ -32,6 +33,7 @@
         <!-- Trin 1: Køb og omkostninger -->
         <section class="page-card" data-step="1">
             <h2>Trin 1: Køb og omkostninger</h2>
+            <!-- Købsomkostninger bruges til startkapitalen i simulationen. -->
             <form id="koeb-form">
                 <div class="field-group">
                     <label for="koeb-beskrivelse">Beskrivelse</label>
@@ -56,6 +58,7 @@
         <!-- Trin 2: Finansiering -->
         <section class="page-card" data-step="2">
             <h2>Trin 2: Finansiering</h2>
+            <!-- Der gemmes én finansiering pr. case. -->
             <form id="finansiering-form">
                 <div class="field-group">
                     <label for="laanebeloeb">Lånebeløb (kr)</label>
@@ -89,6 +92,7 @@
         <!-- Trin 3: Renovering -->
         <section class="page-card" data-step="3">
             <h2>Trin 3: Renovering</h2>
+            <!-- Renoveringer har et år, så de kan påvirke simulationen på rette tidspunkt. -->
             <form id="renovering-form">
                 <div class="field-group">
                     <label for="ren-beskrivelse">Beskrivelse</label>
@@ -115,6 +119,7 @@
         <!-- Trin 4: Driftsbudget -->
         <section class="page-card" data-step="4">
             <h2>Trin 4: Driftsbudget</h2>
+            <!-- Driftsudgifter gemmes månedligt og summeres i frontend. -->
             <form id="drift-form">
                 <div class="field-group">
                     <label for="drift-navn">Navn</label>
@@ -138,6 +143,7 @@
         <!-- Trin 5: Udlejning -->
         <section class="page-card" data-step="5">
             <h2>Trin 5: Udlejning</h2>
+            <!-- Udlejningstal bruges til nettoleje og cashflow. -->
             <form id="udlejning-form">
                 <div class="field-group">
                     <label for="månedlig-leje">Månedlig leje (kr)</label>

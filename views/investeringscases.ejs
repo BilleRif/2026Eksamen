@@ -10,6 +10,7 @@
 </head>
 
 <body>
+    <!-- Oversigtsside til at oprette, kopiere, slette og sammenligne cases. -->
     <header>
         <h1>
             <%= title %>
@@ -22,6 +23,7 @@
     <main>
         <section class="page-card">
 
+            <!-- Opretter en case på en eksisterende ejendom. -->
             <h2>Opret ny investeringscase</h2>
             <form id="case-form">
                 <div class="field-group">
@@ -42,10 +44,12 @@
                 <p id="status"></p>
             </form>
 
+            <!-- Listen udfyldes af public/investeringscases.js. -->
             <h2>Eksisterende cases</h2>
             <p class="help-text">
                 Vælg 2 eller 3 cases for at sammenligne dem side om side.
             </p>
+            <!-- Viser hvor mange cases brugeren har valgt til sammenligning. -->
             <div class="compare-bar">
                 <span id="compare-count">0 valgt</span>
                 <button id="compare-button" type="button" disabled>Sammenlign valgte</button>
