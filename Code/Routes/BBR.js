@@ -101,14 +101,24 @@ async function fetchBbrData(adgangsadresseid) {
     }
 
     const anvendelseskode = String(bygning?.byg021BygningensAnvendelse || '');
+    const ejendomstype = anvendelseskode
+        ? (anvendelseskoder[anvendelseskode] || `Kode ${anvendelseskode}`)
+        : null;
 
     return {
-        ejendomstype:   anvendelseskoder[anvendelseskode] || `Kode ${anvendelseskode}` || null,
+        ejendomstype,
+
         // BBR-feltet kan komme med dansk eller omskrevet feltnavn.
-        byggeaar:       bygning?.['byg026Opførelsesaar'] || bygning?.['byg026Opfoerelsesaar'] || null,
-        boligareal:     enhed?.enh026EnhedensSamledeAreal || bygning?.byg039BygningensSamledeBoligAreal || null,
+        byggeaar:
+            bygning?.['byg026Opførelsesår'] ||
+            bygning?.['byg026Opførelsesaar'] ||
+            bygning?.['byg026Opfoerelsesår'] ||
+            bygning?.['byg026Opfoerelsesaar'] ||
+            null,
+
+        boligareal: enhed?.enh026EnhedensSamledeAreal || bygning?.byg039BygningensSamledeBoligAreal || null,
         antalVaerelser: enhed?.['enh031AntalVærelser'] || null,
-        grundareal:     grundareal || null,
+        grundareal: grundareal || null,
     };
 }
 
